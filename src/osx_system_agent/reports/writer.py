@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import csv
 import json
+from collections.abc import Iterable, Mapping
 from pathlib import Path
-from typing import Iterable, Mapping
 
 from osx_system_agent.utils.paths import ensure_dir
 

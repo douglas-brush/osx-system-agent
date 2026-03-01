@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import datetime
 from pathlib import Path
 
@@ -808,5 +809,212 @@ def trend() -> None:
         console.print(f"Cache change: {cache_dir}{delta['cache_delta_human']}")
 
 
+# ---------------------------------------------------------------------------
+# Doctor
+# ---------------------------------------------------------------------------
+
+
+@app.command()
+def doctor(
+    path: str | None = typer.Option(None, help="Path to scan for junk."),
+) -> None:
+    """Run system health diagnostics and suggest fixes."""
+    from osx_system_agent.doctor import run_diagnostics
+
+    scan_path = expand_path(path) if path else None
+    items = run_diagnostics(scan_path=scan_path)
+
+    severity_styles = {
+        "critical": "[bold red]CRITICAL[/bold red]",
+        "warning": "[yellow]WARNING[/yellow]",
+        "info": "[green]OK[/green]",
+    }
+
+    table = Table(title="System Health Check")
+    table.add_column("Status", width=12)
+    table.add_column("Category")
+    table.add_column("Finding")
+    table.add_column("Suggestion")
+
+    for item in items:
+        style = severity_styles.get(item.severity, item.severity)
+        table.add_row(style, item.category, item.message, item.suggestion)
+
+    console.print(table)
+
+    crits = sum(1 for i in items if i.severity == "critical")
+    warns = sum(1 for i in items if i.severity == "warning")
+    if crits:
+        console.print(f"\n[bold red]{crits} critical issue(s)[/bold red]")
+    elif warns:
+        console.print(f"\n[yellow]{warns} warning(s)[/yellow]")
+    else:
+        console.print("\n[bold green]All checks passed.[/bold green]")
+
+
+# ---------------------------------------------------------------------------
+# Undo
+# ---------------------------------------------------------------------------
+
+
+@app.command()
+def undo(
+    limit: int = typer.Option(20, help="Number of recent actions to show."),
+    restore: int | None = typer.Option(
+        None, help="Restore a specific action by index (1-based)."
+    ),
+    clear: bool = typer.Option(False, help="Clear the undo log."),
+) -> None:
+    """View and undo recent clean operations."""
+    from osx_system_agent.undo import (
+        clear_undo_log,
+        load_undo_log,
+        undo_trash,
+    )
+
+    if clear:
+        clear_undo_log()
+        console.print("[green]Undo log cleared.[/green]")
+        return
+
+    entries = load_undo_log(limit=limit)
+    if not entries:
+        console.print("[yellow]No actions in undo log.[/yellow]")
+        return
+
+    if restore is not None:
+        idx = restore - 1
+        if idx < 0 or idx >= len(entries):
+            console.print(f"[red]Invalid index. Range: 1-{len(entries)}[/red]")
+            return
+        entry = entries[idx]
+        if undo_trash(entry):
+            console.print(f"[green]Restored:[/green] {entry.source}")
+        else:
+            console.print(f"[red]Failed to restore:[/red] {entry.source}")
+        return
+
+    table = Table(title="Recent Actions (undo log)")
+    table.add_column("#", justify="right")
+    table.add_column("Timestamp")
+    table.add_column("Action")
+    table.add_column("Source")
+
+    for idx, entry in enumerate(entries, 1):
+        table.add_row(
+            str(idx),
+            entry.timestamp[:19],
+            entry.action,
+            entry.source,
+        )
+
+    console.print(table)
+    console.print(
+        "\nTo restore: [bold]osa undo --restore N[/bold]"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Config
+# ---------------------------------------------------------------------------
+
+
+@app.command("config")
+def config_cmd(
+    show: bool = typer.Option(False, help="Show current config."),
+    key: str | None = typer.Option(None, help="Config key to get/set."),
+    value: str | None = typer.Option(None, help="Value to set."),
+    reset: bool = typer.Option(False, help="Reset config to defaults."),
+) -> None:
+    """View or modify persistent configuration."""
+    from osx_system_agent.config import (
+        get_value,
+        load_config,
+        reset_config,
+        set_value,
+    )
+
+    if reset:
+        cfg = reset_config()
+        console.print("[green]Config reset to defaults.[/green]")
+        console.print_json(data=cfg)
+        return
+
+    if key and value is not None:
+        # Try to parse JSON values (for lists, booleans, numbers)
+        try:
+            parsed = json.loads(value)
+        except (json.JSONDecodeError, ValueError):
+            parsed = value
+        cfg = set_value(key, parsed)
+        console.print(f"[green]Set {key} = {parsed!r}[/green]")
+        return
+
+    if key:
+        val = get_value(key)
+        console.print(f"{key} = {val!r}")
+        return
+
+    # Default: show all config
+    cfg = load_config()
+    console.print_json(data=cfg)
+
+
+# ---------------------------------------------------------------------------
+# Clean brew
+# ---------------------------------------------------------------------------
+
+
+@clean_app.command("brew")
+def clean_brew_cmd(
+    dry_run: bool = typer.Option(
+        True, help="Preview only; pass --no-dry-run to execute."
+    ),
+    cleanup: bool = typer.Option(
+        True, help="Also run brew cleanup to remove old versions."
+    ),
+) -> None:
+    """Upgrade outdated Homebrew packages. Use --no-dry-run to execute."""
+    from osx_system_agent.clean.brew import brew_cleanup, upgrade_outdated
+
+    result = upgrade_outdated(dry_run=dry_run)
+    mode = (
+        "[bold yellow]DRY RUN[/bold yellow]"
+        if dry_run
+        else "[bold red]LIVE[/bold red]"
+    )
+
+    if not result.upgraded:
+        console.print("[green]All Homebrew packages are up to date.[/green]")
+        return
+
+    table = Table(title=f"Brew Upgrade ({mode})")
+    table.add_column("Package")
+    table.add_column("Version")
+    table.add_column("Type")
+
+    for pkg in result.upgraded:
+        table.add_row(
+            pkg.name,
+            pkg.version,
+            "cask" if pkg.is_cask else "formula",
+        )
+
+    console.print(table)
+
+    if result.failed:
+        console.print(f"\n[red]{len(result.failed)} failures:[/red]")
+        for msg in result.failed:
+            console.print(f"  {msg}")
+
+    if cleanup and not dry_run:
+        console.print("\nRunning brew cleanup...")
+        brew_cleanup(dry_run=False)
+        console.print("[green]Cleanup complete.[/green]")
+    elif cleanup and dry_run:
+        console.print("\n[yellow]Pass --no-dry-run to execute upgrades.[/yellow]")
+
+
 if __name__ == "__main__":
     app()
+
