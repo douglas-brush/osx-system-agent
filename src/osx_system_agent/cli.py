@@ -1015,6 +1015,238 @@ def clean_brew_cmd(
         console.print("\n[yellow]Pass --no-dry-run to execute upgrades.[/yellow]")
 
 
+# ---------------------------------------------------------------------------
+# Scan Xcode
+# ---------------------------------------------------------------------------
+
+
+@scan_app.command("xcode")
+def scan_xcode_cmd() -> None:
+    """Audit Xcode disk usage (DerivedData, Archives, Simulators)."""
+    from osx_system_agent.scanners.xcode import scan_xcode
+
+    audit = scan_xcode()
+
+    if not audit.xcode_installed:
+        console.print("[yellow]Xcode not detected.[/yellow]")
+        return
+
+    # Derived Data
+    if audit.derived_data:
+        dd_table = Table(
+            title=f"DerivedData ({bytes_to_human(audit.derived_data_total)})"
+        )
+        dd_table.add_column("Project")
+        dd_table.add_column("Size", justify="right")
+        for proj in audit.derived_data[:20]:
+            dd_table.add_row(proj.name, bytes_to_human(proj.size))
+        console.print(dd_table)
+
+    # Archives
+    if audit.archives:
+        arch_table = Table(
+            title=f"Archives ({bytes_to_human(audit.archives_total)})"
+        )
+        arch_table.add_column("Name")
+        arch_table.add_column("Size", justify="right")
+        for arch in audit.archives[:15]:
+            arch_table.add_row(arch.name, bytes_to_human(arch.size))
+        console.print(arch_table)
+
+    # Simulators
+    if audit.simulators or audit.simulators_unavailable:
+        sim_table = Table(title="Simulators")
+        sim_table.add_column("Name")
+        sim_table.add_column("Runtime")
+        sim_table.add_column("State")
+        sim_table.add_column("Size", justify="right")
+        sim_table.add_column("Available")
+        for sim in audit.simulators[:10]:
+            sim_table.add_row(
+                sim.name, sim.runtime, sim.state,
+                bytes_to_human(sim.data_size), "yes",
+            )
+        for sim in audit.simulators_unavailable[:10]:
+            sim_table.add_row(
+                sim.name, sim.runtime, sim.state,
+                bytes_to_human(sim.data_size), "[red]no[/red]",
+            )
+        console.print(sim_table)
+        if audit.simulators_unavailable:
+            console.print(
+                f"\n[yellow]{len(audit.simulators_unavailable)} "
+                "unavailable simulators — clean with "
+                "'osa clean xcode --sims'[/yellow]"
+            )
+
+    console.print(
+        f"\nTotal: DerivedData={bytes_to_human(audit.derived_data_total)}"
+        f", Archives={bytes_to_human(audit.archives_total)}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Scan Docker
+# ---------------------------------------------------------------------------
+
+
+@scan_app.command("docker")
+def scan_docker_cmd() -> None:
+    """Audit Docker images, containers, and volumes."""
+    from osx_system_agent.scanners.docker import scan_docker
+
+    audit = scan_docker()
+
+    if not audit.installed:
+        console.print("[yellow]Docker not installed.[/yellow]")
+        return
+
+    if not audit.running:
+        console.print("[yellow]Docker not running.[/yellow]")
+        return
+
+    # Images
+    if audit.images:
+        img_table = Table(title=f"Docker Images ({len(audit.images)})")
+        img_table.add_column("Repository")
+        img_table.add_column("Tag")
+        img_table.add_column("Size", justify="right")
+        for img in audit.images[:20]:
+            img_table.add_row(
+                img.repository, img.tag, bytes_to_human(img.size),
+            )
+        console.print(img_table)
+
+    # Containers
+    if audit.containers:
+        ctr_table = Table(title=f"Containers ({len(audit.containers)})")
+        ctr_table.add_column("Name")
+        ctr_table.add_column("Image")
+        ctr_table.add_column("State")
+        ctr_table.add_column("Status")
+        for ctr in audit.containers[:20]:
+            style = "green" if ctr.state == "running" else "dim"
+            ctr_table.add_row(
+                ctr.name, ctr.image, ctr.state,
+                ctr.status[:40], style=style,
+            )
+        console.print(ctr_table)
+
+    # Volumes
+    if audit.volumes:
+        console.print(f"Volumes: {len(audit.volumes)}")
+
+    # Disk usage
+    if audit.disk_usage:
+        console.print("\n[bold]Docker disk usage:[/bold]")
+        for dtype, size in audit.disk_usage.items():
+            console.print(f"  {dtype}: {bytes_to_human(size)}")
+
+
+# ---------------------------------------------------------------------------
+# Clean Xcode
+# ---------------------------------------------------------------------------
+
+
+@clean_app.command("xcode")
+def clean_xcode_cmd(
+    derived: bool = typer.Option(
+        True, help="Clean DerivedData."
+    ),
+    archives: bool = typer.Option(
+        False, help="Also clean Archives."
+    ),
+    sims: bool = typer.Option(
+        False, "--sims", help="Remove unavailable simulators."
+    ),
+    dry_run: bool = typer.Option(
+        True, help="Preview only; pass --no-dry-run to execute."
+    ),
+) -> None:
+    """Clean Xcode DerivedData, Archives, and Simulators."""
+    from osx_system_agent.clean.xcode import clean_xcode
+
+    result = clean_xcode(
+        derived_data=derived,
+        archives=archives,
+        unavailable_sims=sims,
+        dry_run=dry_run,
+    )
+
+    mode = (
+        "[bold yellow]DRY RUN[/bold yellow]"
+        if dry_run
+        else "[bold red]LIVE[/bold red]"
+    )
+
+    table = Table(title=f"Xcode Cleanup ({mode})")
+    table.add_column("Category")
+    table.add_column("Items", justify="right")
+    table.add_column("Size", justify="right")
+
+    if result.derived_data_count:
+        table.add_row(
+            "DerivedData",
+            str(result.derived_data_count),
+            bytes_to_human(result.derived_data_freed),
+        )
+    if result.archives_count:
+        table.add_row(
+            "Archives",
+            str(result.archives_count),
+            bytes_to_human(result.archives_freed),
+        )
+    if result.simulators_removed:
+        table.add_row(
+            "Unavailable Sims",
+            str(result.simulators_removed),
+            "",
+        )
+
+    console.print(table)
+
+    total = result.derived_data_freed + result.archives_freed
+    console.print(f"Total freed: {bytes_to_human(total)}")
+
+    if result.errors:
+        for err in result.errors:
+            console.print(f"[red]{err}[/red]")
+
+    if dry_run:
+        console.print(
+            "\n[yellow]Pass --no-dry-run to execute cleanup.[/yellow]"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Export (markdown report)
+# ---------------------------------------------------------------------------
+
+
+@app.command("export")
+def export_cmd(
+    fmt: str = typer.Option("markdown", help="Export format (markdown, json)."),
+    out: str | None = typer.Option(None, help="Output directory."),
+    path: str | None = typer.Option(
+        None, help="Optional path to scan for junk files."
+    ),
+) -> None:
+    """Export a system health report in markdown or JSON format."""
+    outdir = _default_outdir(out)
+    scan_path = expand_path(path) if path else None
+
+    if fmt == "markdown" or fmt == "md":
+        from osx_system_agent.reports.markdown import generate_markdown_report
+
+        report_path = generate_markdown_report(outdir, scan_path=scan_path)
+    else:
+        from osx_system_agent.reports.consolidated import generate_report
+
+        report_path = generate_report(outdir, scan_path=scan_path)
+
+    console.print(f"[bold green]Report exported:[/bold green] {report_path}")
+
+
 if __name__ == "__main__":
     app()
 
