@@ -1247,6 +1247,106 @@ def export_cmd(
     console.print(f"[bold green]Report exported:[/bold green] {report_path}")
 
 
+# ---------------------------------------------------------------------------
+# Scan large files
+# ---------------------------------------------------------------------------
+
+
+@scan_app.command("large-files")
+def scan_large_files_cmd(
+    path: str = typer.Option("~", help="Root path to scan."),
+    limit: int = typer.Option(50, help="Number of files to show."),
+    min_size: str = typer.Option("100MB", help="Minimum file size."),
+    out: str | None = typer.Option(None, help="Output directory for reports."),
+) -> None:
+    """Find the largest individual files on disk."""
+    from osx_system_agent.scanners.large_files import scan_large_files
+
+    root = expand_path(path)
+    min_bytes = parse_size(min_size)
+    results = scan_large_files(
+        roots=[root], limit=limit, min_size=min_bytes,
+    )
+    outdir = _default_outdir(out)
+
+    table = Table(title=f"Largest Files ({len(results)} found)")
+    table.add_column("#", justify="right")
+    table.add_column("Size", justify="right")
+    table.add_column("Modified")
+    table.add_column("Path")
+
+    for idx, f in enumerate(results, 1):
+        style = "red" if f.size > 1024**3 else ""
+        table.add_row(
+            str(idx),
+            bytes_to_human(f.size),
+            unix_to_iso(f.mtime),
+            str(f.path),
+            style=style,
+        )
+
+    console.print(table)
+
+    rows = [
+        {
+            "path": str(f.path),
+            "size": f.size,
+            "size_human": bytes_to_human(f.size),
+            "mtime": unix_to_iso(f.mtime),
+        }
+        for f in results
+    ]
+    stamp = _timestamp()
+    json_path = write_json(rows, outdir / f"large-files-{stamp}.json")
+    csv_path = write_csv(rows, outdir / f"large-files-{stamp}.csv")
+    console.print(f"JSON: {json_path}")
+    console.print(f"CSV: {csv_path}")
+
+
+# ---------------------------------------------------------------------------
+# Clean Docker
+# ---------------------------------------------------------------------------
+
+
+@clean_app.command("docker")
+def clean_docker_cmd(
+    all_images: bool = typer.Option(
+        False, "--all", help="Remove all unused images, not just dangling."
+    ),
+    volumes: bool = typer.Option(
+        False, help="Also prune volumes."
+    ),
+    dry_run: bool = typer.Option(
+        True, help="Preview only; pass --no-dry-run to execute."
+    ),
+) -> None:
+    """Run Docker system prune. Use --no-dry-run to execute."""
+    from osx_system_agent.clean.docker import docker_prune
+
+    result = docker_prune(
+        all_images=all_images, volumes=volumes, dry_run=dry_run,
+    )
+
+    if result.error:
+        console.print(f"[red]{result.error}[/red]")
+        return
+
+    mode = (
+        "[bold yellow]DRY RUN[/bold yellow]"
+        if dry_run
+        else "[bold red]LIVE[/bold red]"
+    )
+    console.print(f"Docker Prune ({mode})")
+    if result.space_reclaimed:
+        console.print(result.space_reclaimed)
+
+    if dry_run:
+        console.print(
+            "\n[yellow]Pass --no-dry-run to execute prune.[/yellow]"
+        )
+
+
 if __name__ == "__main__":
     app()
+
 
