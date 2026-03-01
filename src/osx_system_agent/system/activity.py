@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import re
 import subprocess
-from typing import Optional
+from dataclasses import dataclass
 
 import psutil
 
@@ -33,7 +32,8 @@ def _battery_from_pmset() -> BatteryStatus | None:
     except Exception:
         return None
 
-    # Example: "Now drawing from 'Battery Power'" and "-InternalBattery-0 87%; discharging; (no estimate)"
+    # Example: "Now drawing from 'Battery Power'"
+    # and "-InternalBattery-0 87%; discharging; (no estimate)"
     percent_match = re.search(r"(\d+)%", output)
     plugged = "AC Power" in output
     percent = float(percent_match.group(1)) if percent_match else None

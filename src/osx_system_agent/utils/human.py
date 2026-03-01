@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 
 def bytes_to_human(num_bytes: int) -> str:
@@ -15,6 +15,6 @@ def bytes_to_human(num_bytes: int) -> str:
 
 
 def unix_to_iso(ts: float | int | None) -> str:
-    if not ts:
+    if ts is None:
         return ""
-    return datetime.fromtimestamp(ts).isoformat(timespec="seconds")
+    return datetime.fromtimestamp(ts, tz=UTC).isoformat(timespec="seconds")

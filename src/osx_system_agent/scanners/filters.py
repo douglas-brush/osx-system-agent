@@ -2,19 +2,24 @@ from __future__ import annotations
 
 import fnmatch
 import os
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
 DEFAULT_EXCLUDES = [
     ".git",
     ".venv",
+    "__pycache__",
     "node_modules",
+    ".Trash",
     "Library/Caches",
     "Library/Containers",
     "Library/Group Containers",
     "Library/Logs",
     "Library/Application Support/Code/Cache",
     "Library/Application Support/Code/CachedData",
+    "Library/Developer/Xcode/DerivedData",
+    ".Spotlight-V100",
+    ".fseventsd",
 ]
 
 
@@ -24,6 +29,15 @@ def _normalized(path: Path, root: Path) -> str:
         return str(rel)
     except Exception:
         return str(path)
+
+
+def merge_excludes(user_excludes: Iterable[str] | None) -> list[str]:
+    merged = list(DEFAULT_EXCLUDES)
+    if user_excludes:
+        for pat in user_excludes:
+            if pat not in merged:
+                merged.append(pat)
+    return merged
 
 
 def should_exclude(path: Path, root: Path, patterns: Iterable[str]) -> bool:

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
-from osx_system_agent.scanners.filters import DEFAULT_EXCLUDES, iter_files
+from osx_system_agent.scanners.filters import iter_files, merge_excludes
 
 
 def scan_aging(
@@ -14,7 +14,7 @@ def scan_aging(
     excludes: Iterable[str] | None = None,
     follow_symlinks: bool = False,
 ) -> list[dict[str, object]]:
-    excludes = list(DEFAULT_EXCLUDES if excludes is None else excludes)
+    excludes = merge_excludes(excludes)
     rows: list[dict[str, object]] = []
 
     for path in iter_files(root, excludes, follow_symlinks=follow_symlinks):
@@ -35,5 +35,6 @@ def scan_aging(
         )
 
     key = sort if sort in {"mtime", "atime", "ctime", "size"} else "mtime"
-    rows.sort(key=lambda r: r[key], reverse=True if key == "size" else False)
+    # For time fields: ascending (oldest first). For size: descending (largest first).
+    rows.sort(key=lambda r: r[key], reverse=(key == "size"))
     return rows[:limit]

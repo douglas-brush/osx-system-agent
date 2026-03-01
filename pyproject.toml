@@ -8,7 +8,16 @@ version = "0.1.0"
 description = "Local macOS system agent for monitoring and file hygiene."
 readme = "README.md"
 requires-python = ">=3.11"
-keywords = ["macos", "monitoring", "cleanup", "dedupe"]
+license = "MIT"
+keywords = ["macos", "monitoring", "cleanup", "dedupe", "system"]
+classifiers = [
+  "Operating System :: MacOS",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: System :: Systems Administration",
+  "Topic :: Utilities",
+]
 dependencies = [
   "typer>=0.12",
   "rich>=13.7",
@@ -18,7 +27,9 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "pytest>=8.0",
+  "pytest-cov>=5.0",
   "ruff>=0.3",
+  "mypy>=1.10",
 ]
 
 [project.scripts]
@@ -32,3 +43,36 @@ where = ["src"]
 
 [tool.ruff]
 line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+  "E",    # pycodestyle errors
+  "F",    # pyflakes
+  "W",    # pycodestyle warnings
+  "I",    # isort
+  "UP",   # pyupgrade
+  "B",    # flake8-bugbear
+  "SIM",  # flake8-simplify
+  "RUF",  # ruff-specific
+  "C4",   # flake8-comprehensions
+  "PTH",  # flake8-use-pathlib
+  "T20",  # flake8-print (flag stray prints — we use rich.console)
+]
+ignore = [
+  "T201",  # allow print() in CLI output layer
+  "B008",  # typer.Option() in defaults is the intended pattern
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["osx_system_agent"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true

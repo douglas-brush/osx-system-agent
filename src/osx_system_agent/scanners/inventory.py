@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
-from osx_system_agent.scanners.filters import DEFAULT_EXCLUDES, iter_files
+from osx_system_agent.scanners.filters import iter_files, merge_excludes
 
 
 def scan_inventory(
@@ -13,7 +13,7 @@ def scan_inventory(
     excludes: Iterable[str] | None = None,
     follow_symlinks: bool = False,
 ) -> list[dict[str, object]]:
-    excludes = list(DEFAULT_EXCLUDES if excludes is None else excludes)
+    excludes = merge_excludes(excludes)
 
     summary: dict[str, dict[str, object]] = defaultdict(
         lambda: {"extension": "", "count": 0, "total_size": 0, "largest": 0}

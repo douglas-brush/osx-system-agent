@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import hashlib
 from collections import defaultdict
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
 
-from osx_system_agent.scanners.filters import DEFAULT_EXCLUDES, iter_files
+from osx_system_agent.scanners.filters import iter_files, merge_excludes
 
 
 @dataclass
@@ -33,7 +33,7 @@ def scan_duplicates(
     excludes: Iterable[str] | None = None,
     follow_symlinks: bool = False,
 ) -> list[DuplicateGroup]:
-    excludes = list(DEFAULT_EXCLUDES if excludes is None else excludes)
+    excludes = merge_excludes(excludes)
 
     by_size: dict[int, list[Path]] = defaultdict(list)
     for path in iter_files(root, excludes, follow_symlinks=follow_symlinks):
