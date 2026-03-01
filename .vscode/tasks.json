@@ -1,0 +1,29 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Setup venv",
+      "type": "shell",
+      "command": "bash -lc 'python3 -m venv .venv && source .venv/bin/activate && python -m pip install -e .'",
+      "problemMatcher": []
+    },
+    {
+      "label": "OSA: status",
+      "type": "shell",
+      "command": "bash -lc 'source .venv/bin/activate && osa status'",
+      "problemMatcher": []
+    },
+    {
+      "label": "OSA: processes",
+      "type": "shell",
+      "command": "bash -lc 'source .venv/bin/activate && osa processes'",
+      "problemMatcher": []
+    },
+    {
+      "label": "OSA: scan duplicates",
+      "type": "shell",
+      "command": "bash -lc 'source .venv/bin/activate && osa scan duplicates --path ~ --min-size 10MB --out ./reports'",
+      "problemMatcher": []
+    }
+  ]
+}
