@@ -13,10 +13,12 @@ from osx_system_agent.scanners.aging import scan_aging
 from osx_system_agent.scanners.brew import scan_brew
 from osx_system_agent.scanners.caches import scan_caches
 from osx_system_agent.scanners.disk_hogs import scan_disk_hogs
+from osx_system_agent.scanners.disk_usage import scan_disk_usage
 from osx_system_agent.scanners.duplicates import scan_duplicates
 from osx_system_agent.scanners.inventory import scan_inventory
 from osx_system_agent.scanners.junk import scan_junk
 from osx_system_agent.scanners.launch_agents import scan_launch_agents
+from osx_system_agent.scanners.login_items import scan_login_items
 from osx_system_agent.system.activity import get_system_status
 from osx_system_agent.system.processes import snapshot_processes
 from osx_system_agent.utils.human import bytes_to_human, unix_to_iso
@@ -523,6 +525,133 @@ def clean_junk_cmd(
 
     if dry_run:
         console.print("\n[yellow]Pass --no-dry-run to execute cleanup.[/yellow]")
+
+
+@clean_app.command("duplicates")
+def clean_duplicates_cmd(
+    path: str = typer.Option(".", help="Root path to scan."),
+    min_size: str = typer.Option("1MB", help="Minimum file size."),
+    exclude: list[str] | None = typer.Option(None, help="Exclude path pattern (repeatable)."),
+    dry_run: bool = typer.Option(True, help="Preview only; pass --no-dry-run to execute."),
+) -> None:
+    """Deduplicate files by trashing duplicates. Use --no-dry-run to execute."""
+    from osx_system_agent.clean.duplicates import clean_duplicates
+
+    root = expand_path(path)
+    min_bytes = parse_size(min_size)
+    results = clean_duplicates(
+        root,
+        min_size=min_bytes,
+        excludes=list(exclude) if exclude else None,
+        dry_run=dry_run,
+    )
+
+    mode = "[bold yellow]DRY RUN[/bold yellow]" if dry_run else "[bold red]LIVE[/bold red]"
+    total_freed = sum(r.size_freed for r in results)
+
+    table = Table(title=f"Duplicate Cleanup ({mode})")
+    table.add_column("Keep")
+    table.add_column("Trash", justify="right")
+    table.add_column("Freed", justify="right")
+
+    for r in results[:50]:
+        table.add_row(
+            str(r.kept.name),
+            str(len(r.removed)),
+            bytes_to_human(r.size_freed),
+        )
+
+    console.print(table)
+    console.print(f"Total: {len(results)} groups, {bytes_to_human(total_freed)} freed")
+
+    if dry_run:
+        console.print("\n[yellow]Pass --no-dry-run to execute cleanup.[/yellow]")
+
+
+# ---------------------------------------------------------------------------
+# Additional scan commands
+# ---------------------------------------------------------------------------
+
+
+@scan_app.command("disk-usage")
+def scan_disk_usage_cmd(
+    path: str = typer.Option("~", help="Root path to analyze."),
+    min_size: str = typer.Option("100MB", help="Minimum directory size to show."),
+    include_hidden: bool = typer.Option(True, help="Include hidden directories."),
+    out: str | None = typer.Option(None, help="Output directory for reports."),
+) -> None:
+    """Show disk usage breakdown by directory (like du -sh)."""
+    root = expand_path(path)
+    min_bytes = parse_size(min_size)
+    results = scan_disk_usage(root, min_size=min_bytes, include_hidden=include_hidden)
+    outdir = _default_outdir(out)
+
+    total = sum(d.size for d in results)
+
+    table = Table(title=f"Disk Usage: {root} ({bytes_to_human(total)} total)")
+    table.add_column("Directory")
+    table.add_column("Size", justify="right")
+    table.add_column("Files", justify="right")
+
+    for d in results:
+        style = "red" if d.size > 10 * 1024**3 else ("yellow" if d.size > 1024**3 else "")
+        name = "(loose files)" if d.path.name == "(loose files)" else d.path.name
+        table.add_row(name, bytes_to_human(d.size), str(d.file_count), style=style)
+
+    console.print(table)
+
+    rows = [
+        {
+            "path": str(d.path),
+            "size": d.size,
+            "size_human": bytes_to_human(d.size),
+            "file_count": d.file_count,
+            "hidden": d.is_hidden,
+        }
+        for d in results
+    ]
+    stamp = _timestamp()
+    json_path = write_json(rows, outdir / f"disk-usage-{stamp}.json")
+    csv_path = write_csv(rows, outdir / f"disk-usage-{stamp}.csv")
+    console.print(f"JSON: {json_path}")
+    console.print(f"CSV: {csv_path}")
+
+
+@scan_app.command("login-items")
+def scan_login_items_cmd() -> None:
+    """List macOS login items."""
+    items = scan_login_items()
+
+    table = Table(title="Login Items")
+    table.add_column("Name")
+    table.add_column("Kind")
+    table.add_column("Source")
+    table.add_column("Path")
+
+    for item in items:
+        table.add_row(item.name, item.kind, item.source, item.path[:60] if item.path else "")
+
+    console.print(table)
+    console.print(f"\nFound {len(items)} login items.")
+
+
+# ---------------------------------------------------------------------------
+# Consolidated report
+# ---------------------------------------------------------------------------
+
+
+@app.command()
+def report(
+    path: str | None = typer.Option(None, help="Optional path to scan for junk files."),
+    out: str | None = typer.Option(None, help="Output directory for report."),
+) -> None:
+    """Generate a consolidated system health report (JSON)."""
+    from osx_system_agent.reports.consolidated import generate_report
+
+    outdir = _default_outdir(out)
+    scan_path = expand_path(path) if path else None
+    report_path = generate_report(outdir, scan_path=scan_path)
+    console.print(f"[bold green]Report generated:[/bold green] {report_path}")
 
 
 if __name__ == "__main__":
