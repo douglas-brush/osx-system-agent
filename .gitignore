@@ -13,7 +13,7 @@ __pycache__/
 .ruff_cache/
 dist/
 build/
-reports/
+/reports/
 *.log
 .env
 .env.*

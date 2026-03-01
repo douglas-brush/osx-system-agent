@@ -635,6 +635,74 @@ def scan_login_items_cmd() -> None:
     console.print(f"\nFound {len(items)} login items.")
 
 
+@scan_app.command("all")
+def scan_all_cmd() -> None:
+    """Run all scanners and print a summary dashboard."""
+    from rich.panel import Panel
+
+    console.print("[bold]Running all scanners...[/bold]\n")
+
+    # System status
+    info = get_system_status()
+    status_table = Table(title="System Status", show_header=False)
+    status_table.add_row("CPU", f"{info.cpu_percent:.1f}%")
+    status_table.add_row(
+        "Memory",
+        f"{bytes_to_human(info.memory_used)} / {bytes_to_human(info.memory_total)}",
+    )
+    status_table.add_row(
+        "Disk",
+        f"{bytes_to_human(info.disk_used)} / {bytes_to_human(info.disk_total)}"
+        f" ({bytes_to_human(info.disk_free)} free)",
+    )
+    console.print(status_table)
+
+    # Caches
+    caches = scan_caches(min_size=10 * 1024 * 1024)
+    total_cache = sum(c.size for c in caches)
+    console.print(
+        Panel(
+            f"[bold]{bytes_to_human(total_cache)}[/bold] in {len(caches)} cache locations",
+            title="Caches",
+        )
+    )
+
+    # Disk hogs
+    hogs = scan_disk_hogs(min_size=500 * 1024 * 1024)
+    if hogs:
+        hog_table = Table(title="Disk Hogs (>500MB)")
+        hog_table.add_column("Directory")
+        hog_table.add_column("Size", justify="right")
+        for d in hogs[:10]:
+            style = "red" if d.size > 1024**3 else ""
+            hog_table.add_row(str(d.path), bytes_to_human(d.size), style=style)
+        console.print(hog_table)
+
+    # Launch agents
+    agents = scan_launch_agents(include_apple=False)
+    run_at_load = [a for a in agents if a.run_at_load]
+    console.print(
+        Panel(
+            f"[bold]{len(agents)}[/bold] agents/daemons, "
+            f"[bold]{len(run_at_load)}[/bold] run at load",
+            title="Launch Agents",
+        )
+    )
+
+    # Login items
+    logins = scan_login_items()
+    if logins:
+        console.print(
+            Panel(
+                ", ".join(i.name for i in logins[:10])
+                + (f" (+{len(logins) - 10} more)" if len(logins) > 10 else ""),
+                title=f"Login Items ({len(logins)})",
+            )
+        )
+
+    console.print("\n[bold green]Scan complete.[/bold green] Run individual scans for details.")
+
+
 # ---------------------------------------------------------------------------
 # Consolidated report
 # ---------------------------------------------------------------------------
@@ -652,6 +720,92 @@ def report(
     scan_path = expand_path(path) if path else None
     report_path = generate_report(outdir, scan_path=scan_path)
     console.print(f"[bold green]Report generated:[/bold green] {report_path}")
+
+
+# ---------------------------------------------------------------------------
+# Schedule
+# ---------------------------------------------------------------------------
+
+
+@app.command()
+def schedule(
+    interval: int = typer.Option(24, help="Run interval in hours."),
+    report_dir: str = typer.Option(
+        "~/Documents/osx-system-agent-reports", help="Directory for scheduled reports."
+    ),
+    remove: bool = typer.Option(False, help="Remove the scheduled agent."),
+) -> None:
+    """Install/remove a LaunchAgent for periodic system reports."""
+    from osx_system_agent.schedule import generate_launchagent, remove_launchagent
+
+    if remove:
+        if remove_launchagent():
+            console.print("[green]Scheduled agent removed.[/green]")
+        else:
+            console.print("[yellow]No scheduled agent found.[/yellow]")
+        return
+
+    plist_path = generate_launchagent(
+        interval_hours=interval,
+        report_dir=report_dir,
+    )
+    console.print(f"[green]LaunchAgent installed:[/green] {plist_path}")
+    console.print(f"Reports every {interval}h to {report_dir}")
+    console.print("\nTo load now:")
+    console.print(f"  launchctl load {plist_path}")
+    console.print("To unload:")
+    console.print(f"  launchctl unload {plist_path}")
+
+
+@app.command()
+def snapshot() -> None:
+    """Record a point-in-time disk/cache snapshot for trend tracking."""
+    from osx_system_agent.reports.history import record_snapshot
+
+    snap = record_snapshot()
+    console.print(f"[green]Snapshot recorded[/green] at {snap['timestamp']}")
+    console.print(
+        f"Disk: {bytes_to_human(snap['disk_used'])} used, "
+        f"{bytes_to_human(snap['disk_free'])} free"
+    )
+    console.print(f"Caches: {bytes_to_human(snap['cache_total'])}")
+
+
+@app.command()
+def trend() -> None:
+    """Show disk usage trend compared to last snapshot."""
+    from osx_system_agent.reports.history import compare_latest, load_history
+
+    history = load_history(limit=10)
+    if not history:
+        console.print("[yellow]No snapshots yet. Run 'osa snapshot' first.[/yellow]")
+        return
+
+    table = Table(title="Disk Usage History")
+    table.add_column("Timestamp")
+    table.add_column("Disk Used", justify="right")
+    table.add_column("Disk Free", justify="right")
+    table.add_column("Caches", justify="right")
+
+    for snap in history:
+        table.add_row(
+            snap["timestamp"],
+            bytes_to_human(snap["disk_used"]),
+            bytes_to_human(snap["disk_free"]),
+            bytes_to_human(snap["cache_total"]),
+        )
+
+    console.print(table)
+
+    delta = compare_latest()
+    if delta:
+        direction = "[red]+[/red]" if delta["disk_used_delta"] > 0 else "[green]-[/green]"
+        console.print(
+            f"\nDisk change: {direction}{delta['disk_used_delta_human']} "
+            f"since {delta['prev_timestamp']}"
+        )
+        cache_dir = "[red]+[/red]" if delta["cache_delta"] > 0 else "[green]-[/green]"
+        console.print(f"Cache change: {cache_dir}{delta['cache_delta_human']}")
 
 
 if __name__ == "__main__":
