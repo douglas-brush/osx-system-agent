@@ -1403,13 +1403,13 @@ def clean_xcode_cmd(
 
 @app.command("export")
 def export_cmd(
-    fmt: str = typer.Option("markdown", help="Export format (markdown, json)."),
+    fmt: str = typer.Option("markdown", help="Export format (markdown, json, html)."),
     out: str | None = typer.Option(None, help="Output directory."),
     path: str | None = typer.Option(
         None, help="Optional path to scan for junk files."
     ),
 ) -> None:
-    """Export a system health report in markdown or JSON format."""
+    """Export a system health report in markdown, JSON, or HTML format."""
     outdir = _default_outdir(out)
     scan_path = expand_path(path) if path else None
 
@@ -1417,6 +1417,10 @@ def export_cmd(
         from osx_system_agent.reports.markdown import generate_markdown_report
 
         report_path = generate_markdown_report(outdir, scan_path=scan_path)
+    elif fmt == "html":
+        from osx_system_agent.reports.html import generate_html_report
+
+        report_path = generate_html_report(outdir, scan_path=scan_path)
     else:
         from osx_system_agent.reports.consolidated import generate_report
 

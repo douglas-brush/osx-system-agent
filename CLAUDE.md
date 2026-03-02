@@ -46,7 +46,7 @@ Local macOS system agent CLI (`osa`) for monitoring system health, scanning for 
 
 ### Reports & Trending
 - `osa report [--out DIR]` — consolidated JSON system report
-- `osa export [--fmt markdown|json]` — export Markdown or JSON report
+- `osa export [--fmt markdown|json|html]` — export Markdown, JSON, or branded HTML report
 - `osa snapshot` — record point-in-time disk/cache metrics
 - `osa trend` — show historical disk usage with deltas
 - `osa schedule [--interval N] [--remove]` — install LaunchAgent for periodic reports
