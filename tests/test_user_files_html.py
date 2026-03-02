@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import json
-
 from unittest.mock import patch
 
 from osx_system_agent.reports.user_files_html import (
+    _build_clusters,
+    _build_cross_location,
     _build_recommendations,
+    _classify_cluster,
+    _location_key,
     _location_label,
     _shorten_path,
     generate_user_files_report,
@@ -88,6 +91,90 @@ class TestBuildRecommendations:
         recs = _build_recommendations(data)
         enagic_recs = [r for r in recs if "Enagic" in r]
         assert len(enagic_recs) >= 1
+
+
+class TestClassifyCluster:
+    def test_enagic(self) -> None:
+        g = {"files": [{"path": "/foo/Enagic/bar.csv", "dir": "/foo/Enagic"}], "wasted": 100}
+        assert _classify_cluster(g) == "Enagic / Project Fuji"
+
+    def test_denali(self) -> None:
+        g = {"files": [{"path": "/foo/Denali/doc.pdf", "dir": "/foo/Denali"}], "wasted": 100}
+        assert _classify_cluster(g) == "Denali (Google Litigation)"
+
+    def test_mkr(self) -> None:
+        g = {"files": [{"path": "/foo/MKR/file.png", "dir": "/foo/MKR"}], "wasted": 100}
+        assert _classify_cluster(g) == "MKR / Miers DFIR"
+
+    def test_local_documents(self) -> None:
+        doc_path = "/Users/douglas_brush/Documents/a.pdf"
+        g = {
+            "files": [{"path": doc_path, "dir": "/Users/douglas_brush/Documents"}],
+            "wasted": 100,
+        }
+        assert _classify_cluster(g) == "Local Documents"
+
+    def test_photos(self) -> None:
+        pic_path = "/Users/douglas_brush/Pictures/img.jpg"
+        g = {
+            "files": [{"path": pic_path, "dir": "/Users/douglas_brush/Pictures"}],
+            "wasted": 50,
+        }
+        assert _classify_cluster(g) == "Photos / Pictures"
+
+
+class TestLocationKey:
+    def test_sharepoint(self) -> None:
+        assert _location_key("/foo/OneDrive-SharedLibraries-BrushCyber/bar") == "SharePoint"
+
+    def test_onedrive(self) -> None:
+        assert _location_key("/foo/OneDrive-BrushCyber/bar") == "OneDrive"
+
+    def test_documents(self) -> None:
+        assert _location_key("/Users/x/Documents/file.pdf") == "Documents"
+
+
+class TestBuildClusters:
+    def test_groups_by_cluster(self) -> None:
+        groups = [
+            {"files": [{"path": "/x/Enagic/a.csv", "dir": "/x/Enagic"}], "wasted": 100},
+            {"files": [{"path": "/x/Enagic/b.csv", "dir": "/x/Enagic"}], "wasted": 200},
+            {"files": [{"path": "/x/Denali/c.pdf", "dir": "/x/Denali"}], "wasted": 50},
+        ]
+        clusters = _build_clusters(groups)
+        assert "Enagic / Project Fuji" in clusters
+        assert len(clusters["Enagic / Project Fuji"]) == 2
+        assert "Denali (Google Litigation)" in clusters
+
+
+class TestBuildCrossLocation:
+    def test_detects_cross_location(self) -> None:
+        groups = [
+            {
+                "files": [
+                    {"path": "/x/OneDrive-BrushCyber/a.pdf"},
+                    {"path": "/x/OneDrive-SharedLibraries-BrushCyber/a.pdf"},
+                ],
+                "wasted": 1000,
+            },
+        ]
+        result = _build_cross_location(groups)
+        assert len(result) == 1
+        assert "OneDrive" in result[0][0]
+        assert "SharePoint" in result[0][0]
+
+    def test_same_location_excluded(self) -> None:
+        groups = [
+            {
+                "files": [
+                    {"path": "/x/OneDrive-BrushCyber/a.pdf"},
+                    {"path": "/x/OneDrive-BrushCyber/b.pdf"},
+                ],
+                "wasted": 500,
+            },
+        ]
+        result = _build_cross_location(groups)
+        assert len(result) == 0
 
 
 class TestGenerateReport:
