@@ -25,6 +25,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+google = [
+  "google-api-python-client>=2.100",
+  "google-auth-httplib2>=0.2",
+  "google-auth-oauthlib>=1.2",
+]
 dev = [
   "pytest>=8.0",
   "pytest-cov>=5.0",

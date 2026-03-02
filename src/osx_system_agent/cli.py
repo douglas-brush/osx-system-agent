@@ -1328,34 +1328,78 @@ def scan_docker_cmd() -> None:
 
 @scan_app.command("google-drive")
 def scan_google_drive_cmd(
+    api: bool = typer.Option(
+        False, "--api", help="Use Google Drive API instead of local DriveFS.",
+    ),
+    credentials: str | None = typer.Option(
+        None, "--credentials", help="Path to OAuth credentials.json.",
+    ),
     limit: int = typer.Option(50, help="Number of largest files to show."),
     min_size: str = typer.Option("0", help="Minimum file size (e.g., 1MB, 100KB)."),
     out: str | None = typer.Option(None, help="Output directory for reports."),
 ) -> None:
     """Audit Google Drive accounts, storage usage, and largest files."""
-    from osx_system_agent.scanners.google_drive import scan_google_drive
+    from osx_system_agent.scanners.google_drive import (
+        scan_google_drive,
+        scan_google_drive_api,
+    )
 
-    min_bytes = parse_size(min_size)
-    audit = scan_google_drive(limit=limit, min_size=min_bytes)
+    if api:
+        creds_path = expand_path(credentials) if credentials else None
+        audit = scan_google_drive_api(
+            credentials_path=creds_path, limit=limit,
+        )
+    else:
+        min_bytes = parse_size(min_size)
+        audit = scan_google_drive(limit=limit, min_size=min_bytes)
 
     if audit.error and not audit.accounts:
         console.print(f"[yellow]{audit.error}[/yellow]")
         return
 
-    # Accounts
-    acct_table = Table(title=f"Google Drive Accounts ({len(audit.accounts)})")
-    acct_table.add_column("Email")
-    acct_table.add_column("My Drive")
-    acct_table.add_column("Shared Drives")
-    for acct in audit.accounts:
-        acct_table.add_row(
-            acct.email,
-            "Yes" if acct.my_drive_path else "No",
-            "Yes" if acct.shared_drives_path else "No",
+    # Quota (API mode)
+    if audit.quota:
+        console.print(f"\n[bold]Account:[/bold] {audit.quota.email}"
+                       f" ({audit.quota.display_name})")
+        console.print(
+            f"[bold]Storage:[/bold] "
+            f"{bytes_to_human(audit.quota.usage)} used"
+            f" / {bytes_to_human(audit.quota.limit) if audit.quota.limit else '∞'}"
+            f" ({audit.quota.pct_used:.1f}%)"
+            if audit.quota.pct_used is not None
+            else f"[bold]Storage:[/bold] "
+            f"{bytes_to_human(audit.quota.usage)} used (unlimited plan)"
         )
-    console.print(acct_table)
+        console.print(
+            f"  Drive: {bytes_to_human(audit.quota.usage_in_drive)}"
+            f"  |  Trash: {bytes_to_human(audit.quota.usage_in_trash)}"
+        )
+        console.print()
 
-    # Storage summary
+    # Accounts (local mode)
+    if not audit.api_mode and audit.accounts:
+        acct_table = Table(title=f"Google Drive Accounts ({len(audit.accounts)})")
+        acct_table.add_column("Email")
+        acct_table.add_column("My Drive")
+        acct_table.add_column("Shared Drives")
+        for acct in audit.accounts:
+            acct_table.add_row(
+                acct.email,
+                "Yes" if acct.my_drive_path else "No",
+                "Yes" if acct.shared_drives_path else "No",
+            )
+        console.print(acct_table)
+
+    # Shared drives (API mode)
+    if audit.shared_drives:
+        sd_table = Table(title=f"Shared Drives ({len(audit.shared_drives)})")
+        sd_table.add_column("Name")
+        sd_table.add_column("Drive ID")
+        for sd in audit.shared_drives:
+            sd_table.add_row(sd.name, sd.drive_id)
+        console.print(sd_table)
+
+    # Storage summary (local mode)
     if audit.storage:
         stor_table = Table(title="Storage by Location")
         stor_table.add_column("Location")
@@ -1386,7 +1430,9 @@ def scan_google_drive_cmd(
             reverse=True,
         )
         for cat, stats in sorted_cats:
-            cat_table.add_row(cat, f"{stats['count']:,}", bytes_to_human(stats["size"]))
+            cat_table.add_row(
+                cat, f"{stats['count']:,}", bytes_to_human(stats["size"]),
+            )
         console.print(cat_table)
 
     # Largest files
@@ -1398,18 +1444,42 @@ def scan_google_drive_cmd(
         file_table.add_column("Size", justify="right")
         file_table.add_column("Category")
         file_table.add_column("Modified")
-        file_table.add_column("Cloud-only")
+        if audit.api_mode:
+            file_table.add_column("Shared")
+            file_table.add_column("Owner")
+        else:
+            file_table.add_column("Cloud-only")
         for f in audit.largest_files[:limit]:
             style = "red" if f.size > 100 * 1024 * 1024 else ""
-            file_table.add_row(
-                f.name[:60],
-                bytes_to_human(f.size),
-                f.category,
-                unix_to_iso(f.mtime)[:10],
-                "Yes" if f.cloud_only else "",
-                style=style,
-            )
+            if audit.api_mode:
+                file_table.add_row(
+                    f.name[:60],
+                    bytes_to_human(f.size),
+                    f.category,
+                    unix_to_iso(f.mtime)[:10] if f.mtime else "",
+                    "Yes" if f.shared else "",
+                    (f.owner or "")[:30],
+                    style=style,
+                )
+            else:
+                file_table.add_row(
+                    f.name[:60],
+                    bytes_to_human(f.size),
+                    f.category,
+                    unix_to_iso(f.mtime)[:10],
+                    "Yes" if f.cloud_only else "",
+                    style=style,
+                )
         console.print(file_table)
+
+    # Trashed files (API mode)
+    if audit.trashed_files:
+        trash_size = sum(f.size for f in audit.trashed_files)
+        console.print(
+            f"\n[yellow]Trash:[/yellow] {len(audit.trashed_files)} files"
+            f" using {bytes_to_human(trash_size)}"
+            " — empty trash to reclaim space"
+        )
 
     # Export
     outdir = _default_outdir(out)
@@ -1420,8 +1490,11 @@ def scan_google_drive_cmd(
             "size": f.size,
             "size_human": bytes_to_human(f.size),
             "category": f.category,
-            "mtime": unix_to_iso(f.mtime),
+            "mtime": unix_to_iso(f.mtime) if f.mtime else "",
             "cloud_only": f.cloud_only,
+            "shared": f.shared,
+            "owner": f.owner or "",
+            "file_id": f.file_id or "",
         }
         for f in audit.largest_files
     ]

@@ -1,9 +1,11 @@
-"""Google Drive scanner — local DriveFS audit and cloud storage analysis."""
+"""Google Drive scanner — local DriveFS audit and API-based cloud analysis."""
 
 from __future__ import annotations
 
 import os
 import sqlite3
+import stat
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -12,13 +14,35 @@ from osx_system_agent.log import get_logger
 log = get_logger("scanners.google_drive")
 
 # ---------------------------------------------------------------------------
-# Data classes
+# Constants
 # ---------------------------------------------------------------------------
 
 _CLOUD_STORAGE = Path.home() / "Library" / "CloudStorage"
 _DRIVEFS_SUPPORT = (
     Path.home() / "Library" / "Application Support" / "Google" / "DriveFS"
 )
+_CONFIG_DIR = (
+    Path.home() / ".config" / "osx-system-agent" / "google-drive"
+)
+_SCOPES = ["https://www.googleapis.com/auth/drive.metadata.readonly"]
+
+# Google Workspace MIME types (zero-byte in API, not downloadable)
+_GDOC_MIMES = {
+    "application/vnd.google-apps.document",
+    "application/vnd.google-apps.spreadsheet",
+    "application/vnd.google-apps.presentation",
+    "application/vnd.google-apps.form",
+    "application/vnd.google-apps.drawing",
+    "application/vnd.google-apps.site",
+    "application/vnd.google-apps.script",
+    "application/vnd.google-apps.jam",
+    "application/vnd.google-apps.map",
+}
+
+
+# ---------------------------------------------------------------------------
+# Data classes
+# ---------------------------------------------------------------------------
 
 
 @dataclass
@@ -34,14 +58,46 @@ class DriveAccount:
 
 @dataclass
 class DriveFile:
-    """A file synced through Google Drive."""
+    """A file synced through Google Drive (local or API)."""
 
     name: str
-    path: Path
+    path: Path | str
     size: int
     mtime: float
     category: str
     cloud_only: bool = False
+    mime_type: str | None = None
+    shared: bool = False
+    owner: str | None = None
+    file_id: str | None = None
+
+
+@dataclass
+class DriveQuota:
+    """Google Drive storage quota."""
+
+    email: str
+    display_name: str
+    limit: int | None = None
+    usage: int = 0
+    usage_in_drive: int = 0
+    usage_in_trash: int = 0
+
+    @property
+    def pct_used(self) -> float | None:
+        if self.limit and self.limit > 0:
+            return (self.usage / self.limit) * 100
+        return None
+
+
+@dataclass
+class SharedDrive:
+    """A Google Shared Drive."""
+
+    drive_id: str
+    name: str
+    file_count: int = 0
+    total_size: int = 0
 
 
 @dataclass
@@ -60,9 +116,13 @@ class GoogleDriveAudit:
 
     installed: bool = False
     app_path: str | None = None
+    api_mode: bool = False
     accounts: list[DriveAccount] = field(default_factory=list)
+    quota: DriveQuota | None = None
+    shared_drives: list[SharedDrive] = field(default_factory=list)
     storage: list[DriveStorageSummary] = field(default_factory=list)
     largest_files: list[DriveFile] = field(default_factory=list)
+    trashed_files: list[DriveFile] = field(default_factory=list)
     categories: dict[str, dict[str, int]] = field(default_factory=dict)
     total_files: int = 0
     total_size: int = 0
@@ -70,7 +130,7 @@ class GoogleDriveAudit:
 
 
 # ---------------------------------------------------------------------------
-# Category classification
+# Category classification (shared between local and API modes)
 # ---------------------------------------------------------------------------
 
 _CATEGORY_MAP: dict[str, str] = {
@@ -144,13 +204,45 @@ _CATEGORY_MAP: dict[str, str] = {
     ".htm": "Web",
 }
 
+# MIME-type to category for API mode (Google native types + common MIME)
+_MIME_CATEGORY: dict[str, str] = {
+    "application/vnd.google-apps.document": "Google Docs",
+    "application/vnd.google-apps.spreadsheet": "Google Sheets",
+    "application/vnd.google-apps.presentation": "Google Slides",
+    "application/vnd.google-apps.form": "Google Forms",
+    "application/vnd.google-apps.drawing": "Google Drawings",
+    "application/vnd.google-apps.folder": "Folders",
+    "application/pdf": "Documents",
+    "image/": "Images",
+    "video/": "Video",
+    "audio/": "Audio",
+    "text/": "Documents",
+    "application/zip": "Archives",
+    "application/x-gzip": "Archives",
+    "application/x-tar": "Archives",
+}
+
 
 def _categorize(ext: str) -> str:
     return _CATEGORY_MAP.get(ext.lower(), "Other")
 
 
+def _categorize_mime(mime: str, name: str) -> str:
+    """Categorize by MIME type (API mode), fallback to extension."""
+    # Exact match first
+    if mime in _MIME_CATEGORY:
+        return _MIME_CATEGORY[mime]
+    # Prefix match (image/*, video/*, etc.)
+    for prefix, cat in _MIME_CATEGORY.items():
+        if prefix.endswith("/") and mime.startswith(prefix):
+            return cat
+    # Fallback to extension
+    ext = Path(name).suffix.lower() if name else ""
+    return _categorize(ext)
+
+
 # ---------------------------------------------------------------------------
-# Detection helpers
+# Detection helpers (local mode)
 # ---------------------------------------------------------------------------
 
 
@@ -217,7 +309,6 @@ def _find_accounts() -> list[DriveAccount]:
     if _DRIVEFS_SUPPORT.exists():
         for entry in _DRIVEFS_SUPPORT.iterdir():
             if entry.is_dir() and len(entry.name) > 10:
-                # Account hash directories
                 mirror = entry / "root" / "content_cache"
                 if mirror.exists():
                     for acct in accounts:
@@ -229,7 +320,7 @@ def _find_accounts() -> list[DriveAccount]:
 
 
 # ---------------------------------------------------------------------------
-# File walking
+# Local file walking
 # ---------------------------------------------------------------------------
 
 
@@ -267,7 +358,6 @@ def _walk_drive_path(
             categories[cat]["count"] += 1
             categories[cat]["size"] += fsize
 
-            # Check if cloud-only (OneDrive-style extended attrs)
             cloud_only = False
             try:
                 xattr_size = os.getxattr(
@@ -292,7 +382,185 @@ def _walk_drive_path(
 
 
 # ---------------------------------------------------------------------------
-# Main scan
+# API mode — OAuth + Drive v3
+# ---------------------------------------------------------------------------
+
+
+def _get_credentials(credentials_path: Path | None = None):
+    """Load or create OAuth2 credentials for Drive API."""
+    # Late import — these are optional deps
+    from google.auth.transport.requests import Request
+    from google.oauth2.credentials import Credentials
+    from google_auth_oauthlib.flow import InstalledAppFlow
+
+    _CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    token_path = _CONFIG_DIR / "token.json"
+
+    if credentials_path is None:
+        credentials_path = _CONFIG_DIR / "credentials.json"
+
+    creds = None
+    if token_path.exists():
+        creds = Credentials.from_authorized_user_file(str(token_path), _SCOPES)
+
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            if not credentials_path.exists():
+                raise FileNotFoundError(
+                    f"OAuth credentials not found at {credentials_path}. "
+                    "Download from Google Cloud Console > APIs & Services > "
+                    "Credentials > OAuth 2.0 Client ID (Desktop app) and "
+                    f"save to {credentials_path}"
+                )
+            flow = InstalledAppFlow.from_client_secrets_file(
+                str(credentials_path), _SCOPES
+            )
+            creds = flow.run_local_server(port=0)
+
+        # Save token with restrictive permissions
+        token_path.write_text(creds.to_json())
+        token_path.chmod(stat.S_IRUSR | stat.S_IWUSR)
+
+    return creds
+
+
+def _build_service(credentials_path: Path | None = None):
+    """Build authenticated Drive v3 service."""
+    from googleapiclient.discovery import build
+
+    creds = _get_credentials(credentials_path)
+    return build("drive", "v3", credentials=creds)
+
+
+def _api_get_quota(service) -> DriveQuota:
+    """Fetch storage quota via Drive API."""
+    about = service.about().get(
+        fields="storageQuota, user(displayName, emailAddress)"
+    ).execute()
+
+    quota = about["storageQuota"]
+    return DriveQuota(
+        email=about["user"]["emailAddress"],
+        display_name=about["user"]["displayName"],
+        limit=int(quota["limit"]) if "limit" in quota else None,
+        usage=int(quota["usage"]),
+        usage_in_drive=int(quota.get("usageInDrive", 0)),
+        usage_in_trash=int(quota.get("usageInDriveTrash", 0)),
+    )
+
+
+def _api_list_files(
+    service,
+    max_results: int = 200,
+    trashed: bool = False,
+) -> list[dict]:
+    """List files sorted by quotaBytesUsed desc via Drive API."""
+    from googleapiclient.errors import HttpError
+
+    files: list[dict] = []
+    page_token = None
+    q = f"trashed = {str(trashed).lower()}"
+
+    while len(files) < max_results:
+        page_size = min(100, max_results - len(files))
+        try:
+            resp = service.files().list(
+                q=q,
+                orderBy="quotaBytesUsed desc",
+                pageSize=page_size,
+                pageToken=page_token,
+                fields=(
+                    "nextPageToken, "
+                    "files(id, name, mimeType, size, quotaBytesUsed, "
+                    "owners, shared, trashed, createdTime, modifiedTime)"
+                ),
+                spaces="drive",
+                includeItemsFromAllDrives=False,
+                supportsAllDrives=True,
+            ).execute()
+        except HttpError as exc:
+            if exc.resp.status in (403, 429):
+                log.warning("Rate limited, backing off: %s", exc)
+                time.sleep(2)
+                continue
+            raise
+
+        batch = resp.get("files", [])
+        files.extend(batch)
+        page_token = resp.get("nextPageToken")
+        if not page_token:
+            break
+
+    return files
+
+
+def _api_list_shared_drives(service) -> list[SharedDrive]:
+    """List shared drives via API."""
+    drives: list[SharedDrive] = []
+    page_token = None
+
+    while True:
+        resp = service.drives().list(
+            pageSize=100,
+            pageToken=page_token,
+        ).execute()
+
+        for d in resp.get("drives", []):
+            drives.append(SharedDrive(
+                drive_id=d["id"],
+                name=d["name"],
+            ))
+
+        page_token = resp.get("nextPageToken")
+        if not page_token:
+            break
+
+    return drives
+
+
+def _parse_api_time(ts: str | None) -> float:
+    """Convert API ISO timestamp to Unix epoch."""
+    if not ts:
+        return 0.0
+    from datetime import datetime
+    try:
+        dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+        return dt.timestamp()
+    except (ValueError, AttributeError):
+        return 0.0
+
+
+def _api_files_to_drive_files(raw_files: list[dict]) -> list[DriveFile]:
+    """Convert API file dicts to DriveFile dataclasses."""
+    results: list[DriveFile] = []
+    for f in raw_files:
+        mime = f.get("mimeType", "")
+        name = f.get("name", "")
+        size = int(f.get("quotaBytesUsed") or f.get("size") or 0)
+        owners = f.get("owners", [])
+        owner_name = owners[0].get("displayName", "") if owners else ""
+
+        results.append(DriveFile(
+            name=name,
+            path=f"drive://{f.get('id', '')}",
+            size=size,
+            mtime=_parse_api_time(f.get("modifiedTime")),
+            category=_categorize_mime(mime, name),
+            cloud_only=True,
+            mime_type=mime,
+            shared=f.get("shared", False),
+            owner=owner_name,
+            file_id=f.get("id"),
+        ))
+
+    results.sort(key=lambda x: x.size, reverse=True)
+    return results
+
+
+# ---------------------------------------------------------------------------
+# Main scan functions
 # ---------------------------------------------------------------------------
 
 
@@ -300,14 +568,11 @@ def scan_google_drive(
     limit: int = 50,
     min_size: int = 0,
 ) -> GoogleDriveAudit:
-    """Audit Google Drive: accounts, storage usage, largest files."""
+    """Audit Google Drive via local DriveFS paths."""
     audit = GoogleDriveAudit()
 
-    # Detect installation
     audit.app_path = _find_app()
     audit.installed = audit.app_path is not None
-
-    # Find accounts
     audit.accounts = _find_accounts()
 
     if not audit.accounts:
@@ -317,12 +582,10 @@ def scan_google_drive(
             audit.error = "Google Drive installed but no synced accounts found"
         return audit
 
-    # Walk each account's drive paths
     all_files: list[DriveFile] = []
 
     for acct in audit.accounts:
         if acct.root_path and acct.root_path.exists():
-            # Scan My Drive
             if acct.my_drive_path and acct.my_drive_path.exists():
                 files, cats, count, size = _walk_drive_path(
                     acct.my_drive_path, min_size=min_size,
@@ -337,7 +600,6 @@ def scan_google_drive(
                     by_category=cats,
                 ))
 
-            # Scan Shared drives
             if acct.shared_drives_path and acct.shared_drives_path.exists():
                 files, cats, count, size = _walk_drive_path(
                     acct.shared_drives_path, min_size=min_size,
@@ -352,7 +614,6 @@ def scan_google_drive(
                     by_category=cats,
                 ))
 
-            # Scan any other top-level dirs (Shared with me, etc.)
             for entry in acct.root_path.iterdir():
                 if (
                     entry.is_dir()
@@ -373,7 +634,6 @@ def scan_google_drive(
                         by_category=cats,
                     ))
 
-    # Aggregate categories
     for summary in audit.storage:
         for cat, stats in summary.by_category.items():
             if cat not in audit.categories:
@@ -381,8 +641,65 @@ def scan_google_drive(
             audit.categories[cat]["count"] += stats["count"]
             audit.categories[cat]["size"] += stats["size"]
 
-    # Top files
     all_files.sort(key=lambda f: f.size, reverse=True)
     audit.largest_files = all_files[:limit]
+
+    return audit
+
+
+def scan_google_drive_api(
+    credentials_path: Path | None = None,
+    limit: int = 200,
+) -> GoogleDriveAudit:
+    """Audit Google Drive via API — quota, largest files, trash, shared drives."""
+    audit = GoogleDriveAudit(api_mode=True)
+
+    try:
+        service = _build_service(credentials_path)
+    except FileNotFoundError as exc:
+        audit.error = str(exc)
+        return audit
+    except Exception as exc:
+        audit.error = f"Google Drive API auth failed: {exc}"
+        return audit
+
+    # Quota
+    try:
+        audit.quota = _api_get_quota(service)
+        audit.accounts = [DriveAccount(email=audit.quota.email)]
+    except Exception as exc:
+        audit.error = f"Failed to get quota: {exc}"
+        return audit
+
+    # Largest files (My Drive, not trashed)
+    try:
+        raw_files = _api_list_files(service, max_results=limit, trashed=False)
+        audit.largest_files = _api_files_to_drive_files(raw_files)
+    except Exception as exc:
+        log.warning("Failed to list files: %s", exc)
+
+    # Trashed files (recoverable space)
+    try:
+        raw_trash = _api_list_files(service, max_results=50, trashed=True)
+        audit.trashed_files = _api_files_to_drive_files(raw_trash)
+    except Exception as exc:
+        log.debug("Failed to list trash: %s", exc)
+
+    # Shared drives
+    try:
+        audit.shared_drives = _api_list_shared_drives(service)
+    except Exception as exc:
+        log.debug("Failed to list shared drives: %s", exc)
+
+    # Build category stats from largest files
+    for f in audit.largest_files:
+        cat = f.category
+        if cat not in audit.categories:
+            audit.categories[cat] = {"count": 0, "size": 0}
+        audit.categories[cat]["count"] += 1
+        audit.categories[cat]["size"] += f.size
+
+    audit.total_files = len(audit.largest_files)
+    audit.total_size = sum(f.size for f in audit.largest_files)
 
     return audit
