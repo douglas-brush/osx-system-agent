@@ -1322,6 +1322,117 @@ def scan_docker_cmd() -> None:
 
 
 # ---------------------------------------------------------------------------
+# Scan Google Drive
+# ---------------------------------------------------------------------------
+
+
+@scan_app.command("google-drive")
+def scan_google_drive_cmd(
+    limit: int = typer.Option(50, help="Number of largest files to show."),
+    min_size: str = typer.Option("0", help="Minimum file size (e.g., 1MB, 100KB)."),
+    out: str | None = typer.Option(None, help="Output directory for reports."),
+) -> None:
+    """Audit Google Drive accounts, storage usage, and largest files."""
+    from osx_system_agent.scanners.google_drive import scan_google_drive
+
+    min_bytes = parse_size(min_size)
+    audit = scan_google_drive(limit=limit, min_size=min_bytes)
+
+    if audit.error and not audit.accounts:
+        console.print(f"[yellow]{audit.error}[/yellow]")
+        return
+
+    # Accounts
+    acct_table = Table(title=f"Google Drive Accounts ({len(audit.accounts)})")
+    acct_table.add_column("Email")
+    acct_table.add_column("My Drive")
+    acct_table.add_column("Shared Drives")
+    for acct in audit.accounts:
+        acct_table.add_row(
+            acct.email,
+            "Yes" if acct.my_drive_path else "No",
+            "Yes" if acct.shared_drives_path else "No",
+        )
+    console.print(acct_table)
+
+    # Storage summary
+    if audit.storage:
+        stor_table = Table(title="Storage by Location")
+        stor_table.add_column("Location")
+        stor_table.add_column("Files", justify="right")
+        stor_table.add_column("Size", justify="right")
+        for s in audit.storage:
+            stor_table.add_row(
+                s.location,
+                f"{s.total_files:,}",
+                bytes_to_human(s.total_size),
+            )
+        stor_table.add_row(
+            "[bold]Total[/bold]",
+            f"[bold]{audit.total_files:,}[/bold]",
+            f"[bold]{bytes_to_human(audit.total_size)}[/bold]",
+        )
+        console.print(stor_table)
+
+    # Categories
+    if audit.categories:
+        cat_table = Table(title="Files by Category")
+        cat_table.add_column("Category")
+        cat_table.add_column("Files", justify="right")
+        cat_table.add_column("Size", justify="right")
+        sorted_cats = sorted(
+            audit.categories.items(),
+            key=lambda x: x[1]["size"],
+            reverse=True,
+        )
+        for cat, stats in sorted_cats:
+            cat_table.add_row(cat, f"{stats['count']:,}", bytes_to_human(stats["size"]))
+        console.print(cat_table)
+
+    # Largest files
+    if audit.largest_files:
+        file_table = Table(
+            title=f"Largest Files (top {min(limit, len(audit.largest_files))})"
+        )
+        file_table.add_column("Name")
+        file_table.add_column("Size", justify="right")
+        file_table.add_column("Category")
+        file_table.add_column("Modified")
+        file_table.add_column("Cloud-only")
+        for f in audit.largest_files[:limit]:
+            style = "red" if f.size > 100 * 1024 * 1024 else ""
+            file_table.add_row(
+                f.name[:60],
+                bytes_to_human(f.size),
+                f.category,
+                unix_to_iso(f.mtime)[:10],
+                "Yes" if f.cloud_only else "",
+                style=style,
+            )
+        console.print(file_table)
+
+    # Export
+    outdir = _default_outdir(out)
+    rows = [
+        {
+            "name": f.name,
+            "path": str(f.path),
+            "size": f.size,
+            "size_human": bytes_to_human(f.size),
+            "category": f.category,
+            "mtime": unix_to_iso(f.mtime),
+            "cloud_only": f.cloud_only,
+        }
+        for f in audit.largest_files
+    ]
+    stamp = _timestamp()
+    json_path = write_json(rows, outdir / f"google-drive-{stamp}.json")
+    csv_path = write_csv(rows, outdir / f"google-drive-{stamp}.csv")
+    console.print(f"\nJSON → {json_path}")
+    console.print(f"CSV  → {csv_path}")
+
+
+# ---------------------------------------------------------------------------
 # Clean Xcode
 # ---------------------------------------------------------------------------
 

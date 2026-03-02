@@ -4,6 +4,7 @@ from osx_system_agent.scanners.caches import scan_caches
 from osx_system_agent.scanners.disk_hogs import scan_disk_hogs
 from osx_system_agent.scanners.disk_usage import scan_disk_usage
 from osx_system_agent.scanners.docker import scan_docker
+from osx_system_agent.scanners.google_drive import scan_google_drive
 from osx_system_agent.scanners.duplicates import scan_duplicates
 from osx_system_agent.scanners.inventory import scan_inventory
 from osx_system_agent.scanners.junk import scan_junk
@@ -20,6 +21,7 @@ __all__ = [
     "scan_disk_hogs",
     "scan_disk_usage",
     "scan_docker",
+    "scan_google_drive",
     "scan_duplicates",
     "scan_inventory",
     "scan_junk",
