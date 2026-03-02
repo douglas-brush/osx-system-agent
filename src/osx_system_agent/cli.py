@@ -1408,12 +1408,19 @@ def export_cmd(
     path: str | None = typer.Option(
         None, help="Optional path to scan for junk files."
     ),
+    scan_json: str | None = typer.Option(
+        None, "--scan-json", help="Path to user-files-scan.json for dedup report."
+    ),
 ) -> None:
     """Export a system health report in markdown, JSON, or HTML format."""
     outdir = _default_outdir(out)
     scan_path = expand_path(path) if path else None
 
-    if fmt == "markdown" or fmt == "md":
+    if scan_json:
+        from osx_system_agent.reports.user_files_html import generate_user_files_report
+
+        report_path = generate_user_files_report(Path(scan_json), outdir)
+    elif fmt == "markdown" or fmt == "md":
         from osx_system_agent.reports.markdown import generate_markdown_report
 
         report_path = generate_markdown_report(outdir, scan_path=scan_path)
