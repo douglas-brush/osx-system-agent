@@ -34,6 +34,8 @@ Local macOS system agent CLI (`osa`) for monitoring system health, scanning for 
 - `osa scan junk` — .DS_Store and junk file scanner
 - `osa scan xcode` — Xcode DerivedData, Archives, Simulators
 - `osa scan docker` — Docker images, containers, volumes
+- `osa scan security` — FileVault, SIP, Gatekeeper, Firewall, XProtect, SSH, ARD, auto-updates
+- `osa scan network` — interfaces, DNS, listening ports, proxies, connectivity, VPN detection
 
 ### Clean (all support `--dry-run`/`--no-dry-run`)
 - `osa clean caches` — purge cache directories
@@ -72,7 +74,9 @@ src/osx_system_agent/
 │   ├── caches.py          # Cache directory scanner
 │   ├── junk.py            # .DS_Store / junk scanner
 │   ├── xcode.py           # Xcode DerivedData/Archives/Sims
-│   └── docker.py          # Docker images/containers/volumes
+│   ├── docker.py          # Docker images/containers/volumes
+│   ├── security.py        # FileVault/SIP/Gatekeeper/Firewall/XProtect
+│   └── network.py         # Interfaces/DNS/ports/proxies/connectivity
 ├── clean/                 # Cleanup/remediation modules
 │   ├── trash.py           # Finder trash + undo logging
 │   ├── caches.py          # Cache purge

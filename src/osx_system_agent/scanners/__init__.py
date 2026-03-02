@@ -9,6 +9,8 @@ from osx_system_agent.scanners.inventory import scan_inventory
 from osx_system_agent.scanners.junk import scan_junk
 from osx_system_agent.scanners.launch_agents import scan_launch_agents
 from osx_system_agent.scanners.login_items import scan_login_items
+from osx_system_agent.scanners.network import scan_network
+from osx_system_agent.scanners.security import scan_security
 from osx_system_agent.scanners.xcode import scan_xcode
 
 __all__ = [
@@ -23,5 +25,7 @@ __all__ = [
     "scan_junk",
     "scan_launch_agents",
     "scan_login_items",
+    "scan_network",
+    "scan_security",
     "scan_xcode",
 ]

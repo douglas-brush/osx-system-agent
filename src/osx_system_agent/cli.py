@@ -20,6 +20,8 @@ from osx_system_agent.scanners.inventory import scan_inventory
 from osx_system_agent.scanners.junk import scan_junk
 from osx_system_agent.scanners.launch_agents import scan_launch_agents
 from osx_system_agent.scanners.login_items import scan_login_items
+from osx_system_agent.scanners.network import scan_network
+from osx_system_agent.scanners.security import scan_security
 from osx_system_agent.system.activity import get_system_status
 from osx_system_agent.system.processes import snapshot_processes
 from osx_system_agent.utils.human import bytes_to_human, unix_to_iso
@@ -636,6 +638,146 @@ def scan_login_items_cmd() -> None:
     console.print(f"\nFound {len(items)} login items.")
 
 
+@scan_app.command("security")
+def scan_security_cmd() -> None:
+    """Audit macOS security posture (FileVault, SIP, Gatekeeper, Firewall, etc.)."""
+    audit = scan_security()
+
+    table = Table(title="Security Audit")
+    table.add_column("Check")
+    table.add_column("Status")
+    table.add_column("Detail")
+
+    severity_style = {"ok": "green", "warn": "yellow", "critical": "red"}
+
+    for check in audit.checks:
+        if check.enabled is True:
+            badge = "[green]PASS[/green]"
+        elif check.enabled is False:
+            badge = "[red]FAIL[/red]" if check.severity == "critical" else "[yellow]WARN[/yellow]"
+        else:
+            badge = "[dim]UNKNOWN[/dim]"
+        style = severity_style.get(check.severity, "")
+        table.add_row(check.name, badge, check.status[:80], style=style)
+
+    console.print(table)
+
+    critical = sum(1 for c in audit.checks if c.severity == "critical")
+    warn = sum(1 for c in audit.checks if c.severity == "warn")
+    ok = sum(1 for c in audit.checks if c.severity == "ok")
+    console.print(
+        f"\n[green]{ok} passed[/green]  [yellow]{warn} warnings[/yellow]"
+        f"  [red]{critical} critical[/red]"
+    )
+
+
+@scan_app.command("network")
+def scan_network_cmd() -> None:
+    """Audit network: interfaces, DNS, listening ports, proxies, connectivity."""
+    audit = scan_network()
+
+    # Interfaces
+    iface_table = Table(title="Network Interfaces")
+    iface_table.add_column("Service")
+    iface_table.add_column("Interface")
+    iface_table.add_column("IP Address")
+    iface_table.add_column("Router")
+    iface_table.add_column("Status")
+
+    for iface in audit.interfaces:
+        style = "green" if iface.status == "active" else "dim"
+        iface_table.add_row(
+            iface.service_name,
+            iface.name,
+            iface.ip_address or "-",
+            iface.router or "-",
+            iface.status,
+            style=style,
+        )
+    console.print(iface_table)
+
+    # DNS
+    if audit.dns:
+        dns_table = Table(title="DNS Configuration")
+        dns_table.add_column("Servers")
+        dns_table.add_column("Search Domains")
+        dns_table.add_column("Resolvers")
+        dns_table.add_row(
+            ", ".join(audit.dns.servers) or "(none)",
+            ", ".join(audit.dns.search_domains) or "(none)",
+            str(audit.dns.resolver_count),
+        )
+        console.print(dns_table)
+
+    # Listening ports
+    if audit.listening_ports:
+        port_table = Table(title="Listening Ports")
+        port_table.add_column("Port", justify="right")
+        port_table.add_column("Address")
+        port_table.add_column("Process")
+        port_table.add_column("PID", justify="right")
+        for p in audit.listening_ports[:30]:
+            port_table.add_row(
+                str(p.port),
+                p.address,
+                p.process or "-",
+                str(p.pid) if p.pid else "-",
+            )
+        if len(audit.listening_ports) > 30:
+            port_table.add_row("...", f"+{len(audit.listening_ports) - 30} more", "", "")
+        console.print(port_table)
+
+    # Proxy
+    if audit.proxy:
+        any_proxy = (
+            audit.proxy.http_enabled or audit.proxy.https_enabled or audit.proxy.socks_enabled
+        )
+        if any_proxy:
+            proxy_table = Table(title="Proxy Configuration")
+            proxy_table.add_column("Type")
+            proxy_table.add_column("Server")
+            proxy_table.add_column("Port")
+            if audit.proxy.http_enabled:
+                proxy_table.add_row(
+                    "HTTP", audit.proxy.http_server or "-",
+                    str(audit.proxy.http_port or "-"),
+                )
+            if audit.proxy.https_enabled:
+                proxy_table.add_row(
+                    "HTTPS", audit.proxy.https_server or "-",
+                    str(audit.proxy.https_port or "-"),
+                )
+            if audit.proxy.socks_enabled:
+                proxy_table.add_row(
+                    "SOCKS", audit.proxy.socks_server or "-",
+                    str(audit.proxy.socks_port or "-"),
+                )
+            console.print(proxy_table)
+        else:
+            console.print("[dim]No proxy configured.[/dim]")
+
+    # Connectivity
+    if audit.connectivity:
+        conn_table = Table(title="Connectivity")
+        conn_table.add_column("Target")
+        conn_table.add_column("Status")
+        conn_table.add_column("Latency")
+        for test in audit.connectivity:
+            status = "[green]OK[/green]" if test.success else f"[red]FAIL[/red] {test.error or ''}"
+            latency = f"{test.latency_ms:.1f}ms" if test.latency_ms else "-"
+            conn_table.add_row(test.target, status, latency)
+        console.print(conn_table)
+
+    # VPN / Wi-Fi
+    extras = []
+    if audit.vpn_active:
+        extras.append("[yellow]VPN detected[/yellow]")
+    if audit.wifi_ssid:
+        extras.append(f"Wi-Fi SSID: {audit.wifi_ssid}")
+    if extras:
+        console.print("  ".join(extras))
+
+
 @scan_app.command("all")
 def scan_all_cmd() -> None:
     """Run all scanners and print a summary dashboard."""
@@ -700,6 +842,42 @@ def scan_all_cmd() -> None:
                 title=f"Login Items ({len(logins)})",
             )
         )
+
+    # Security posture
+    sec_audit = scan_security()
+    critical = sum(1 for c in sec_audit.checks if c.severity == "critical")
+    warn = sum(1 for c in sec_audit.checks if c.severity == "warn")
+    ok = sum(1 for c in sec_audit.checks if c.severity == "ok")
+    sec_color = "red" if critical else "yellow" if warn else "green"
+    console.print(
+        Panel(
+            f"[green]{ok} passed[/green]  [yellow]{warn} warnings[/yellow]  "
+            f"[red]{critical} critical[/red]",
+            title="Security Posture",
+            border_style=sec_color,
+        )
+    )
+
+    # Network connectivity
+    net_audit = scan_network()
+    active_ifaces = [i for i in net_audit.interfaces if i.status == "active"]
+    conn_ok = sum(1 for t in net_audit.connectivity if t.success)
+    conn_total = len(net_audit.connectivity)
+    net_parts = [
+        f"[bold]{len(active_ifaces)}[/bold] active interfaces",
+        f"[bold]{conn_ok}/{conn_total}[/bold] connectivity checks passed",
+        f"[bold]{len(net_audit.listening_ports)}[/bold] listening ports",
+    ]
+    if net_audit.vpn_active:
+        net_parts.append("[yellow]VPN active[/yellow]")
+    if net_audit.wifi_ssid:
+        net_parts.append(f"SSID: {net_audit.wifi_ssid}")
+    console.print(
+        Panel(
+            "  |  ".join(net_parts),
+            title="Network",
+        )
+    )
 
     console.print("\n[bold green]Scan complete.[/bold green] Run individual scans for details.")
 
