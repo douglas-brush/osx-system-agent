@@ -20,6 +20,7 @@ from osx_system_agent.scanners.inventory import scan_inventory
 from osx_system_agent.scanners.junk import scan_junk
 from osx_system_agent.scanners.launch_agents import scan_launch_agents
 from osx_system_agent.scanners.login_items import scan_login_items
+from osx_system_agent.scanners.clutter import scan_clutter
 from osx_system_agent.scanners.network import scan_network
 from osx_system_agent.scanners.security import scan_security
 from osx_system_agent.system.activity import get_system_status
@@ -1674,6 +1675,156 @@ def scan_large_files_cmd(
     csv_path = write_csv(rows, outdir / f"large-files-{stamp}.csv")
     console.print(f"JSON: {json_path}")
     console.print(f"CSV: {csv_path}")
+
+
+@scan_app.command("clutter")
+def scan_clutter_cmd(
+    path: str = typer.Option("~/Desktop", help="Directory to scan for clutter."),
+    downloads: bool = typer.Option(True, help="Also scan ~/Downloads."),
+    stale_days: int = typer.Option(180, help="Days before a file is considered stale."),
+    out: str | None = typer.Option(None, help="Output directory for reports."),
+) -> None:
+    """Categorise Desktop/Downloads clutter for triage."""
+    from osx_system_agent.scanners.clutter import ClutterReport
+
+    targets = [expand_path(path)]
+    if downloads:
+        dl = expand_path("~/Downloads")
+        if dl.is_dir():
+            targets.append(dl)
+
+    all_items: list = []
+    for target in targets:
+        report = scan_clutter(target, stale_days=stale_days)
+        all_items.extend(report.items)
+
+    if not all_items:
+        console.print("[green]No clutter found.[/green]")
+        return
+
+    # Group by category
+    from collections import Counter
+    cat_counts = Counter(i.category for i in all_items)
+    cat_size: dict[str, int] = {}
+    for i in all_items:
+        cat_size[i.category] = cat_size.get(i.category, 0) + i.size
+
+    summary = Table(title="Clutter Summary")
+    summary.add_column("Category")
+    summary.add_column("Count", justify="right")
+    summary.add_column("Size", justify="right")
+    summary.add_column("Action")
+
+    cat_order = ["word_temp", "dead_file", "webloc", "dmg_installer", "generic_name", "numbered_copy", "opaque_name", "stale"]
+    for cat in cat_order:
+        if cat in cat_counts:
+            summary.add_row(
+                cat,
+                str(cat_counts[cat]),
+                bytes_to_human(cat_size.get(cat, 0)),
+                all_items[[i.category for i in all_items].index(cat)].suggestion,
+            )
+    console.print(summary)
+
+    detail = Table(title=f"Clutter Detail ({len(all_items)} files)")
+    detail.add_column("Category")
+    detail.add_column("Age", justify="right")
+    detail.add_column("Size", justify="right")
+    detail.add_column("File")
+
+    for item in all_items:
+        style = "red" if item.category in ("word_temp", "dead_file") else ""
+        detail.add_row(
+            item.category,
+            f"{item.age_days}d",
+            bytes_to_human(item.size),
+            str(item.path),
+            style=style,
+        )
+
+    console.print(detail)
+
+    outdir = _default_outdir(out)
+    rows = [
+        {
+            "category": i.category,
+            "path": str(i.path),
+            "size": i.size,
+            "size_human": bytes_to_human(i.size),
+            "age_days": i.age_days,
+            "suggestion": i.suggestion,
+        }
+        for i in all_items
+    ]
+    stamp = _timestamp()
+    json_path = write_json(rows, outdir / f"clutter-{stamp}.json")
+    csv_path = write_csv(rows, outdir / f"clutter-{stamp}.csv")
+    console.print(f"\nJSON: {json_path}")
+    console.print(f"CSV: {csv_path}")
+
+
+# ---------------------------------------------------------------------------
+# Rename command
+# ---------------------------------------------------------------------------
+
+
+@app.command()
+def rename(
+    path: str = typer.Option("~/Desktop", help="Directory to scan for files needing rename."),
+    downloads: bool = typer.Option(True, help="Also scan ~/Downloads."),
+    all_files: bool = typer.Option(False, "--all", help="Propose renames for ALL files, not just bad names."),
+    dry_run: bool = typer.Option(True, help="Preview only; pass --no-dry-run to execute."),
+) -> None:
+    """Rename files based on content metadata. Default: dry-run preview."""
+    from osx_system_agent.renamer import execute_renames, scan_for_renames
+
+    targets = [expand_path(path)]
+    if downloads:
+        dl = expand_path("~/Downloads")
+        if dl.is_dir():
+            targets.append(dl)
+
+    all_proposals = []
+    for target in targets:
+        console.print(f"Scanning [bold]{target}[/bold]...")
+        proposals = scan_for_renames(target, include_all=all_files)
+        all_proposals.extend(proposals)
+
+    if not all_proposals:
+        console.print("[green]No files need renaming.[/green]")
+        return
+
+    mode = "[bold yellow]DRY RUN[/bold yellow]" if dry_run else "[bold red]LIVE[/bold red]"
+    console.print(f"\n{mode} — {len(all_proposals)} rename(s) proposed:\n")
+
+    table = Table(title="Rename Proposals")
+    table.add_column("Original")
+    table.add_column("→")
+    table.add_column("Proposed")
+    table.add_column("Reason")
+
+    for p in all_proposals:
+        table.add_row(
+            p.original.name,
+            "→",
+            p.proposed.name,
+            p.reason,
+        )
+
+    console.print(table)
+
+    results = execute_renames(all_proposals, dry_run=dry_run)
+
+    if not dry_run:
+        renamed = sum(1 for r in results if r["status"] == "renamed")
+        errors = sum(1 for r in results if r["status"].startswith("error"))
+        console.print(f"\n[green]{renamed} renamed[/green]", end="")
+        if errors:
+            console.print(f", [red]{errors} errors[/red]")
+        else:
+            console.print()
+    else:
+        console.print(f"\n[yellow]Pass --no-dry-run to execute renames.[/yellow]")
 
 
 # ---------------------------------------------------------------------------
