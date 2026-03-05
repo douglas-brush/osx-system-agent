@@ -1,0 +1,700 @@
+{
+  "reportDate": "2026-03-04",
+  "host": "AngryBox",
+  "operator": "Douglas Brush",
+  "exportedAt": "2026-03-04T14:28:29.169Z",
+  "decisions": [
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "Google Chrome",
+      "details": {
+        "Application": "Google Chrome",
+        "Size": "1.3 GB",
+        "Last Used": "2024-07-19",
+        "Verdict": "Remove",
+        "Rationale": "Not used since Jul 2024. You have Brave + Firefox + Edge. Three Chromium browsers is plenty."
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:19:38.916Z"
+    },
+    {
+      "tier": "audited",
+      "action": "keep",
+      "item": "VMware Fusion",
+      "details": {
+        "Application": "VMware Fusion",
+        "Size": "1.2 GB",
+        "Last Used": "2024-11-28",
+        "Verdict": "Remove",
+        "Rationale": "Not used in 3+ months. VirtualBox also installed — pick one if needed."
+      },
+      "comment": "Against the press. remove VirtualBox, but I also want you to audit and see what versions of VMware Fusion are installed versus what's out there",
+      "decidedAt": "2026-03-04T14:19:41.748Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "GarageBand",
+      "details": {
+        "Application": "GarageBand",
+        "Size": "1.0 GB",
+        "Last Used": "2024-07-06",
+        "Verdict": "Remove",
+        "Rationale": "Never meaningfully used. Apple bloatware. Initial setup date only."
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:20:57.733Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "GIMP",
+      "details": {
+        "Application": "GIMP",
+        "Size": "913 MB",
+        "Last Used": "2024-05-13",
+        "Verdict": "Remove",
+        "Rationale": "Not used in ~2 years."
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:21:00.699Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "Webull Desktop",
+      "details": {
+        "Application": "Webull Desktop",
+        "Size": "1.0 GB",
+        "Last Used": "2025-09-22",
+        "Verdict": "Remove",
+        "Rationale": "Not used in 5+ months. Use web version."
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:21:02.965Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "Plex",
+      "details": {
+        "Application": "Plex",
+        "Size": "633 MB",
+        "Last Used": "2025-08-09",
+        "Verdict": "Remove",
+        "Rationale": "Not used in 7 months. Web interface available."
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:21:04.449Z"
+    },
+    {
+      "tier": "audited",
+      "action": "keep",
+      "item": "Mullvad VPN",
+      "details": {
+        "Application": "Mullvad VPN",
+        "Size": "543 MB",
+        "Last Used": "2025-03-01",
+        "Verdict": "Remove",
+        "Rationale": "Not used in 12 months. Has system daemon running (net.mullvad.daemon). Cloudflare WARP also installed."
+      },
+      "comment": "I actively use this, I don't know why it says that it hasn't been used in that long. Hell, even your own reporting shows that I've used it recently",
+      "decidedAt": "2026-03-04T14:21:07.065Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "TeamViewer",
+      "details": {
+        "Application": "TeamViewer",
+        "Size": "511 MB",
+        "Last Used": "2025-11-19",
+        "Verdict": "Remove",
+        "Rationale": "3 LaunchDaemons running constantly (Helper, UninstallerHelper, UninstallerWatcher). Major background bloat."
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:21:25.015Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "Keynote",
+      "details": {
+        "Application": "Keynote",
+        "Size": "510 MB",
+        "Last Used": "2024-07-06",
+        "Verdict": "Remove",
+        "Rationale": "Never used (setup date). PowerPoint is the daily driver."
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:21:27.248Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "ChatGPT Atlas",
+      "details": {
+        "Application": "ChatGPT Atlas",
+        "Size": "488 MB",
+        "Last Used": "2025-10-23",
+        "Verdict": "Remove",
+        "Rationale": "Superseded by ChatGPT.app (which you use). Duplicate OpenAI client."
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:21:29.365Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "Thunderbird",
+      "details": {
+        "Application": "Thunderbird",
+        "Size": "467 MB",
+        "Last Used": "2025-07-09",
+        "Verdict": "Remove",
+        "Rationale": "Not used in 8 months. Outlook is the daily driver."
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:21:31.232Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "Pages",
+      "details": {
+        "Application": "Pages",
+        "Size": "431 MB",
+        "Last Used": "2024-07-06",
+        "Verdict": "Remove",
+        "Rationale": "Never used. Word is the daily driver."
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:21:37.865Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "Numbers",
+      "details": {
+        "Application": "Numbers",
+        "Size": "392 MB",
+        "Last Used": "2024-07-06",
+        "Verdict": "Remove",
+        "Rationale": "Never used. Excel is the daily driver."
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:21:44.582Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "VirtualBox",
+      "details": {
+        "Application": "VirtualBox",
+        "Size": "340 MB",
+        "Last Used": "2025-12-03",
+        "Verdict": "Consider",
+        "Rationale": "Used Dec 2025. Has system daemon (org.virtualbox.vboxwebsrv). Keep if actively needed for VMs."
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:21:49.015Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "Navigation Updater",
+      "details": {
+        "Application": "Navigation Updater",
+        "Size": "321 MB",
+        "Last Used": "2025-05-05",
+        "Verdict": "Remove",
+        "Rationale": "Vehicle nav map updater. Not used in 10 months."
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:21:53.132Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "QuickBooks Online",
+      "details": {
+        "Application": "QuickBooks Online",
+        "Size": "296 MB",
+        "Last Used": "2024-09-24",
+        "Verdict": "Remove",
+        "Rationale": "Not used in 17 months. Web version available."
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:22:00.098Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "FlixiCam StreamOne",
+      "details": {
+        "Application": "FlixiCam StreamOne",
+        "Size": "255 MB",
+        "Last Used": "2024-07-07",
+        "Verdict": "Remove",
+        "Rationale": "Netflix ripper — never used (setup date)."
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:22:04.049Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "VLC",
+      "details": {
+        "Application": "VLC",
+        "Size": "153 MB",
+        "Last Used": "2024-06-06",
+        "Verdict": "Remove",
+        "Rationale": "Not used in ~2 years. QuickTime / Brave handles media."
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:22:18.399Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "ScreenConnect Client",
+      "details": {
+        "Application": "ScreenConnect Client",
+        "Size": "76 MB",
+        "Last Used": "2024-08-24",
+        "Verdict": "Remove",
+        "Rationale": "Remote support client. Not used in 18 months."
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:22:19.798Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "com.teamviewer.Helper",
+      "details": {
+        "Daemon": "com.teamviewer.Helper",
+        "Owner App": "TeamViewer",
+        "Verdict": "Remove app"
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:23:31.066Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "com.teamviewer.UninstallerHelper",
+      "details": {
+        "Daemon": "com.teamviewer.UninstallerHelper",
+        "Owner App": "TeamViewer",
+        "Verdict": "Remove app"
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:23:32.698Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "com.teamviewer.UninstallerWatcher",
+      "details": {
+        "Daemon": "com.teamviewer.UninstallerWatcher",
+        "Owner App": "TeamViewer",
+        "Verdict": "Remove app"
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:23:34.115Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "com.adobe.ARMDC.*",
+      "details": {
+        "Daemon": "com.adobe.ARMDC.*",
+        "Owner App": "Adobe Reader (not installed?)",
+        "Verdict": "Orphaned daemon"
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:23:37.281Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "com.ambrosiasw.ambrosiaaudiosupporthelper",
+      "details": {
+        "Daemon": "com.ambrosiasw.ambrosiaaudiosupporthelper",
+        "Owner App": "Ambrosia Audio (legacy kext)",
+        "Verdict": "Orphaned daemon"
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:23:42.415Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "com.tenablesecurity.nessusd",
+      "details": {
+        "Daemon": "com.tenablesecurity.nessusd",
+        "Owner App": "Nessus",
+        "Verdict": "Keep (security)"
+      },
+      "comment": "I need to reinstall Nessus with a new licensed version. This one could be completely removed. Both the running processes in the whole software package",
+      "decidedAt": "2026-03-04T14:24:19.765Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "com.cloudflare.1dot1dot1dot1.macos.warp.daemon",
+      "details": {
+        "Daemon": "com.cloudflare.1dot1dot1dot1.macos.warp.daemon",
+        "Owner App": "Cloudflare WARP",
+        "Verdict": "Keep"
+      },
+      "comment": "I don't use cloud flare warp on this machine",
+      "decidedAt": "2026-03-04T14:24:07.215Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "us.zoom.ZoomDaemon / updater",
+      "details": {
+        "Daemon": "us.zoom.ZoomDaemon / updater",
+        "Owner App": "Zoom",
+        "Verdict": "Keep (work)"
+      },
+      "comment": "I do not need this running in the background. I just need the zoom app installed and we'll update unlaunch.",
+      "decidedAt": "2026-03-04T14:23:53.782Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "org.virtualbox.vboxwebsrv",
+      "details": {
+        "Daemon": "org.virtualbox.vboxwebsrv",
+        "Owner App": "VirtualBox",
+        "Verdict": "Review"
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:24:39.299Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "org.wireshark.ChmodBPF",
+      "details": {
+        "Daemon": "org.wireshark.ChmodBPF",
+        "Owner App": "Wireshark",
+        "Verdict": "Keep (security)"
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:24:40.732Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "runzero-agent-*",
+      "details": {
+        "Daemon": "runzero-agent-*",
+        "Owner App": "RunZero",
+        "Verdict": "Keep (security)"
+      },
+      "comment": "Run zero package is just an agent that I run in client environments. I don't need it on this system.",
+      "decidedAt": "2026-03-04T14:24:47.032Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "com.logitech.vc.LogiSync*",
+      "details": {
+        "Daemon": "com.logitech.vc.LogiSync*",
+        "Owner App": "Logitech (no app visible)",
+        "Verdict": "Orphaned — 3 daemons"
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:25:00.916Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "com.rogueamoeba.aceagent / acetool",
+      "details": {
+        "Daemon": "com.rogueamoeba.aceagent / acetool",
+        "Owner App": "Audio Hijack / SoundSource (not installed?)",
+        "Verdict": "Orphaned daemon"
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:25:02.800Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "Superhuman",
+      "details": {
+        "Application Support Dir": "Superhuman",
+        "Size": "1.6 GB",
+        "App Installed?": "No",
+        "Action": "Delete"
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:25:11.682Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "WebEx Folder",
+      "details": {
+        "Application Support Dir": "WebEx Folder",
+        "Size": "416 MB",
+        "App Installed?": "No",
+        "Action": "Delete"
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:25:16.115Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "Cisco",
+      "details": {
+        "Application Support Dir": "Cisco",
+        "Size": "192 MB",
+        "App Installed?": "No",
+        "Action": "Delete"
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:25:18.898Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "RealtimeBoard (Miro)",
+      "details": {
+        "Application Support Dir": "RealtimeBoard (Miro)",
+        "Size": "51 MB",
+        "App Installed?": "No",
+        "Action": "Delete"
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:25:21.916Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "MeisterTask",
+      "details": {
+        "Application Support Dir": "MeisterTask",
+        "Size": "38 MB",
+        "App Installed?": "No",
+        "Action": "Delete"
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:25:23.932Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "Windsurf",
+      "details": {
+        "Application Support Dir": "Windsurf",
+        "Size": "35 MB",
+        "App Installed?": "No",
+        "Action": "Delete"
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:25:25.615Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "hunchly",
+      "details": {
+        "Application Support Dir": "hunchly",
+        "Size": "2 MB",
+        "App Installed?": "No",
+        "Action": "Delete"
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:25:30.299Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "DuckDuckGo (browser + vpn)",
+      "details": {
+        "Application Support Dir": "DuckDuckGo (browser + vpn)",
+        "Size": "<1 MB",
+        "App Installed?": "No",
+        "Action": "Delete"
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:25:33.582Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "Vivaldi",
+      "details": {
+        "Application Support Dir": "Vivaldi",
+        "Size": "<1 MB",
+        "App Installed?": "No",
+        "Action": "Delete"
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:25:37.015Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "Arc",
+      "details": {
+        "Application Support Dir": "Arc",
+        "Size": "<1 MB",
+        "App Installed?": "No",
+        "Action": "Delete"
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:25:39.865Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "Elcomsoft Phone Password Breaker",
+      "details": {
+        "Application Support Dir": "Elcomsoft Phone Password Breaker",
+        "Size": "<1 MB",
+        "App Installed?": "No",
+        "Action": "Delete"
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:25:41.298Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "Elcomsoft",
+      "details": {
+        "Application Support Dir": "Elcomsoft",
+        "Size": "<1 MB",
+        "App Installed?": "No",
+        "Action": "Delete"
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:25:46.249Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "WonderISO / WinBootMate / UUBYTEISOEditor",
+      "details": {
+        "Application Support Dir": "WonderISO / WinBootMate / UUBYTEISOEditor",
+        "Size": "<1 MB",
+        "App Installed?": "No",
+        "Action": "Delete"
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:25:48.500Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "iMovie",
+      "details": {
+        "Application Support Dir": "iMovie",
+        "Size": "<1 MB",
+        "App Installed?": "No",
+        "Action": "Delete"
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:25:49.782Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "Aspera Connect",
+      "details": {
+        "Application": "Aspera Connect",
+        "Status": "IBM file transfer client",
+        "Action": "Remove if not actively transferring files"
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:25:57.332Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "Aspera Crypt",
+      "details": {
+        "Application": "Aspera Crypt",
+        "Status": "IBM encryption companion",
+        "Action": "Remove with Aspera Connect"
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:25:59.182Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "IBM Aspera Launcher",
+      "details": {
+        "Application": "IBM Aspera Launcher",
+        "Status": "IBM launcher service",
+        "Action": "Remove with Aspera Connect"
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:26:02.299Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "__MACOSX junk directory",
+      "details": {
+        "Item": "__MACOSX junk directory",
+        "Location": "/Applications/__MACOSX",
+        "Size": "1.7 MB",
+        "Action": "Delete"
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:26:10.649Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "HTTrack (website copier)",
+      "details": {
+        "Item": "HTTrack (website copier)",
+        "Location": "/Applications/HTTrack",
+        "Size": "7.2 MB",
+        "Action": "Remove if not needed"
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:26:13.115Z"
+    },
+    {
+      "tier": "audited",
+      "action": "remove",
+      "item": "Nessus (bare directory)",
+      "details": {
+        "Item": "Nessus (bare directory)",
+        "Location": "/Applications/Nessus",
+        "Size": "4 KB",
+        "Action": "Stub only — Nessus runs via daemon"
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:26:16.549Z"
+    },
+    {
+      "tier": "quick",
+      "action": "remove",
+      "item": "WhatsApp",
+      "details": {
+        "Application": "WhatsApp",
+        "Size": "501 MB",
+        "Last Used": "2026-02-28",
+        "Category": "Daily"
+      },
+      "comment": null,
+      "decidedAt": "2026-03-04T14:28:29.173Z"
+    }
+  ]
+}

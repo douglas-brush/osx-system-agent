@@ -3,19 +3,6 @@
   "python.analysis.extraPaths": ["src"],
   "python.envFile": "${workspaceFolder}/.env",
   "python.terminal.useEnvFile": true,
-  "terminal.integrated.profiles.osx": {
-    "Codex (OpenAI API)": {
-      "path": "/bin/zsh",
-      "args": [
-        "-l",
-        "-i",
-        "-c",
-        "codex -p openai-codex-api --dangerously-bypass-approvals-and-sandbox; exec zsh -l"
-      ],
-      "overrideName": true
-    }
-  },
-  "terminal.integrated.defaultProfile.osx": "Codex (OpenAI API)",
   "python.testing.pytestEnabled": true,
   "python.testing.pytestArgs": ["tests"],
   "editor.formatOnSave": true,

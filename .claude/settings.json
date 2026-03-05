@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "source .claude/hooks/activate-venv.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

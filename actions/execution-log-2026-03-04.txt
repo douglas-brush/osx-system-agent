@@ -1,0 +1,112 @@
+=== APP AUDIT EXECUTION LOG ===
+Host: AngryBox
+Operator: Douglas Brush
+Started: 2026-03-04T14:30:17Z
+Triage source: actions/app-audit-triage-2026-03-04.json
+
+
+=== PHASE 1: APP REMOVAL (Trash) ===
+Started: 2026-03-04T14:30:44Z
+  TRASHED: Google Chrome (1.3G)
+  TRASHED: GarageBand (986M)
+  NOT FOUND: GIMP-2.10
+  TRASHED: Webull Desktop (1.0G)
+  TRASHED: Plex (618M)
+  TRASHED: TeamViewer (499M)
+  TRASHED: Keynote (498M)
+  TRASHED: ChatGPT Atlas (476M)
+  TRASHED: Thunderbird (456M)
+  TRASHED: Pages (421M)
+  TRASHED: Numbers (383M)
+  TRASHED: VirtualBox (332M)
+  TRASHED: Navigation Updater (313M)
+  TRASHED: QuickBooks Online (289M)
+  TRASHED: FlixiCam StreamOne (249M)
+  TRASHED: VLC (149M)
+  TRASHED: ScreenConnect Client ( 74M)
+  TRASHED: WhatsApp (490M)
+
+Phase 1 complete: 2026-03-04T14:31:53Z
+  TRASHED: GIMP.app (891M)
+
+=== PHASE 2: ORPHANED APPLICATION SUPPORT ===
+Started: 2026-03-04T14:32:08Z
+  TRASHED: ~/Library/Application Support/Superhuman (1.6G)
+  TRASHED: ~/Library/Application Support/Wineskin (424M)
+  TRASHED: ~/Library/Application Support/WebEx Folder (407M)
+  TRASHED: ~/Library/Application Support/Cisco (187M)
+  TRASHED: ~/Library/Application Support/RealtimeBoard ( 50M)
+  TRASHED: ~/Library/Application Support/MeisterTask ( 37M)
+  TRASHED: ~/Library/Application Support/Windsurf ( 34M)
+  TRASHED: ~/Library/Application Support/hunchly (1.7M)
+  NOT FOUND: ~/Library/Application Support/DuckDuckGo
+  TRASHED: ~/Library/Application Support/Vivaldi (4.0K)
+  TRASHED: ~/Library/Application Support/Arc (4.0K)
+  TRASHED: ~/Library/Application Support/Elcomsoft Phone Password Breaker ( 24K)
+  TRASHED: ~/Library/Application Support/Elcomsoft ( 20K)
+  TRASHED: ~/Library/Application Support/WonderISO (  0B)
+  TRASHED: ~/Library/Application Support/WinBootMate (  0B)
+  TRASHED: ~/Library/Application Support/UUBYTEISOEditor (  0B)
+  TRASHED: ~/Library/Application Support/iMovie (4.0K)
+  NOT FOUND: ~/Library/Application Support/Opera
+Phase 2 complete: 2026-03-04T14:32:12Z
+
+=== PHASE 3: ~/Applications CLEANUP ===
+  TRASHED: ~/Applications/Aspera Connect.app ( 80M)
+  TRASHED: ~/Applications/Aspera Crypt.app ( 44M)
+  TRASHED: ~/Applications/IBM Aspera Launcher.app (4.1M)
+  TRASHED: ~/Applications/Notepad.app (1.4G)
+Phase 3 complete: 2026-03-04T14:32:14Z
+
+=== PHASE 4: MISC ARTIFACTS ===
+  DELETED: /Applications/__MACOSX
+  DELETED: /Applications/HTTrack (7.0M)
+  DELETED: /Applications/Nessus (stub)
+Phase 4 complete: 2026-03-04T14:32:16Z
+
+=== PHASE 5: DAEMON CLEANUP ===
+Started: 2026-03-04T14:32:27Z
+  REMOVED: com.teamviewer.Helper
+  REMOVED: com.teamviewer.UninstallerHelper
+  REMOVED: com.teamviewer.UninstallerWatcher
+  REMOVED: com.adobe.ARMDC.Communicator
+  REMOVED: com.adobe.ARMDC.SMJobBlessHelper
+  REMOVED: com.ambrosiasw.ambrosiaaudiosupporthelper.daemon
+  REMOVED: com.tenablesecurity.nessusd
+  REMOVED: com.cloudflare.1dot1dot1dot1.macos.warp.daemon
+  REMOVED: org.wireshark.ChmodBPF
+  REMOVED: runzero-agent-e30e266c-35a2-4f51-909e-4f9e9205c106
+  REMOVED: com.rogueamoeba.aceagent
+  REMOVED: com.rogueamoeba.acetool
+  REMOVED: Adobe ARMDCHelper agent
+  REMOVED: com.logitech.vc.LogiSyncHandler
+  REMOVED: com.logitech.vc.LogiSyncMiddleware
+  REMOVED: com.logitech.vc.LogiSyncProxy
+  REMOVED: org.virtualbox.vboxwebsrv (user agent)
+  DISABLED: us.zoom.ZoomDaemon (plist kept, daemon disabled)
+Phase 5 complete: 2026-03-04T14:32:49Z
+
+=== PHASE 6: FULL APP REMOVAL (WARP, Nessus, RunZero) ===
+  WARP app not found in /Applications (daemon already removed)
+  DELETED: /Library/Nessus (9.6G)
+
+Phase 6 complete: 2026-03-04T14:33:10Z
+
+=== EXECUTION COMPLETE ===
+Finished: 2026-03-04T14:36:37Z
+
+SUMMARY:
+  Apps trashed: 22 (18 from /Applications, 4 from ~/Applications)
+  Daemons removed: 16 plists (backed up to actions/backup-daemon-plists/)
+  Daemons disabled: 1 (Zoom)
+  Orphaned AppSupport: 16 dirs trashed
+  Nessus full removal: 9.6 GB (/Library/Nessus)
+  Misc artifacts: 3 deleted (__MACOSX, HTTrack, Nessus stub)
+  LastPass user agent: removed
+
+  Disk before: 473.4 GB used (95.7%)
+  Disk after:  ~15 GB used (49%) — APFS purgeable holding reclaimed space
+  Trash: ~13 GB (38 items) — empty to finalize
+
+  Delta report: reports/post-purge-delta-20260304.html
+  Triage source: actions/app-audit-triage-2026-03-04.json

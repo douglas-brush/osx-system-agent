@@ -1,0 +1,649 @@
+{
+  "host": "0Angry_Box",
+  "serial": "JFVJKGD12H",
+  "auditDate": "2026-03-04",
+  "generatedAt": "2026-03-04T20:44:51.604Z",
+  "actions": {
+    "security": [
+      {
+        "control": "firewall",
+        "action": "enable",
+        "command": "sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setglobalstate on"
+      }
+    ],
+    "appRemovals": [
+      {
+        "app": "Discord",
+        "version": "0.0.376",
+        "size": "444 MB",
+        "lastUsed": "2026-02-09",
+        "status": "Active",
+        "action": "remove"
+      },
+      {
+        "app": "DisplayLink Manager",
+        "version": "1.12.4",
+        "size": "17 MB",
+        "lastUsed": "2025-07-16",
+        "status": "Active",
+        "action": "remove"
+      },
+      {
+        "app": "Elephas",
+        "version": "11.4010",
+        "size": "231 MB",
+        "lastUsed": "2025-12-17",
+        "status": "Active",
+        "action": "remove"
+      },
+      {
+        "app": "Healthy Minds",
+        "version": "n/a",
+        "size": "62 MB",
+        "lastUsed": "2026-02-24",
+        "status": "Active",
+        "action": "remove"
+      },
+      {
+        "app": "JSON Viewer",
+        "version": "1.2.2",
+        "size": "10 MB",
+        "lastUsed": "2020-06-22",
+        "status": "Stale",
+        "action": "remove"
+      },
+      {
+        "app": "MacUncle MSG Viewer",
+        "version": "1.0.2",
+        "size": "20 MB",
+        "lastUsed": "2025-09-09",
+        "status": "Active",
+        "action": "remove"
+      },
+      {
+        "app": "Microsoft Defender Shim",
+        "version": "101.24080",
+        "size": "7.5 MB",
+        "lastUsed": "2024-10-16",
+        "status": "Stale",
+        "action": "remove"
+      },
+      {
+        "app": "Microsoft To Do",
+        "version": "2.159",
+        "size": "32 MB",
+        "lastUsed": "2025-10-12",
+        "status": "Active",
+        "action": "remove"
+      },
+      {
+        "app": "Notion",
+        "version": "3.9.6",
+        "size": "229 MB",
+        "lastUsed": "2024-07-07",
+        "status": "Stale",
+        "action": "remove"
+      },
+      {
+        "app": "Poly Lens",
+        "version": "1.4.0",
+        "size": "408 MB",
+        "lastUsed": "2024-07-07",
+        "status": "Stale",
+        "action": "remove"
+      },
+      {
+        "app": "Post-it",
+        "version": "5.3.8",
+        "size": "69 MB",
+        "lastUsed": "2026-01-31",
+        "status": "Active",
+        "action": "remove"
+      },
+      {
+        "app": "SonicWall Mobile Connect",
+        "version": "5.0.14",
+        "size": "32 MB",
+        "lastUsed": "2025-12-06",
+        "status": "Active",
+        "action": "remove"
+      },
+      {
+        "app": "Telegram",
+        "version": "12.4.1",
+        "size": "288 MB",
+        "lastUsed": "2026-01-08",
+        "status": "Active",
+        "action": "remove"
+      }
+    ],
+    "appUpdates": [
+      {
+        "app": "docker",
+        "action": "upgrade",
+        "command": "brew upgrade --cask docker",
+        "from": "4.60.1",
+        "to": "4.63.0"
+      },
+      {
+        "app": "discord",
+        "action": "upgrade",
+        "command": "brew upgrade --cask discord",
+        "from": "0.0.376",
+        "to": "0.0.379"
+      },
+      {
+        "app": "telegram",
+        "action": "upgrade",
+        "command": "brew upgrade --cask telegram",
+        "from": "12.4.1",
+        "to": "12.5"
+      },
+      {
+        "app": "zoom",
+        "action": "upgrade",
+        "command": "brew upgrade --cask zoom",
+        "from": "6.6.11",
+        "to": "6.7.7"
+      },
+      {
+        "app": "wireshark",
+        "action": "upgrade",
+        "command": "brew upgrade --cask wireshark",
+        "from": "4.6.1",
+        "to": "4.6.4"
+      },
+      {
+        "app": "mullvadvpn",
+        "action": "upgrade",
+        "command": "brew upgrade --cask mullvadvpn",
+        "from": "2025.4",
+        "to": "2025.14"
+      },
+      {
+        "app": "vmware-fusion",
+        "action": "upgrade",
+        "command": "brew upgrade --cask vmware-fusion",
+        "from": "13.6.2",
+        "to": "13.6.3"
+      }
+    ],
+    "serviceActions": [
+      {
+        "service": "us.zoom.ZoomDaemon",
+        "type": "daemon",
+        "vendor": "Zoom",
+        "action": "disable"
+      },
+      {
+        "service": "com.google.keystone.agent",
+        "type": "agent",
+        "vendor": "Google",
+        "action": "disable"
+      },
+      {
+        "service": "com.google.keystone.xpcservice",
+        "type": "agent",
+        "vendor": "Google",
+        "action": "disable"
+      },
+      {
+        "service": "com.macunclemsgviewer.export",
+        "type": "agent",
+        "vendor": "MacUncle",
+        "action": "disable"
+      },
+      {
+        "service": "com.microsoft.OneDriveStandaloneUpdater",
+        "type": "agent",
+        "vendor": "Microsoft",
+        "action": "disable"
+      },
+      {
+        "service": "us.zoom.updater.login.check",
+        "type": "agent",
+        "vendor": "Zoom",
+        "action": "disable"
+      },
+      {
+        "service": "us.zoom.updater",
+        "type": "agent",
+        "vendor": "Zoom",
+        "action": "disable"
+      },
+      {
+        "service": "com.brushcyber.enagic-mfa-audit",
+        "type": "user-agent",
+        "vendor": "Custom",
+        "action": "disable"
+      }
+    ],
+    "orphanRemovals": [
+      {
+        "directory": "com.duckduckgo.macos.browser",
+        "path": "~/Library/Application Support/com.duckduckgo.macos.browser",
+        "size": "212 KB",
+        "action": "remove"
+      },
+      {
+        "directory": "com.duckduckgo.macos.vpn",
+        "path": "~/Library/Application Support/com.duckduckgo.macos.vpn",
+        "size": "212 KB",
+        "action": "remove"
+      },
+      {
+        "directory": "com.operasoftware.Opera",
+        "path": "~/Library/Application Support/com.operasoftware.Opera",
+        "size": "4.0 KB",
+        "action": "remove"
+      },
+      {
+        "directory": "com.adobe.dunamis",
+        "path": "~/Library/Application Support/com.adobe.dunamis",
+        "size": "74 MB",
+        "action": "remove"
+      },
+      {
+        "directory": "Caches",
+        "path": "~/Library/Application Support/Caches",
+        "size": "182 MB",
+        "action": "remove"
+      },
+      {
+        "directory": "CEF",
+        "path": "~/Library/Application Support/CEF",
+        "size": "31 MB",
+        "action": "remove"
+      },
+      {
+        "directory": "oz-client",
+        "path": "~/Library/Application Support/oz-client",
+        "size": "23 MB",
+        "action": "remove"
+      },
+      {
+        "directory": "Animoji",
+        "path": "~/Library/Application Support/Animoji",
+        "size": "4.4 MB",
+        "action": "remove"
+      },
+      {
+        "directory": "Navigation Updater",
+        "path": "~/Library/Application Support/Navigation Updater",
+        "size": "3.1 MB",
+        "action": "remove"
+      },
+      {
+        "directory": "Telestream",
+        "path": "~/Library/Application Support/Telestream",
+        "size": "4.0 KB",
+        "action": "remove"
+      },
+      {
+        "directory": "Webex Meetings",
+        "path": "~/Library/Application Support/Webex Meetings",
+        "size": "36 KB",
+        "action": "remove"
+      }
+    ],
+    "homebrew": [
+      {
+        "action": "upgrade_all",
+        "command": "brew update && brew upgrade"
+      }
+    ],
+    "documentActions": [
+      {
+        "file": "Academic_Calendar_2024-25.pdf",
+        "action": "delete",
+        "destination": "Trash"
+      },
+      {
+        "file": "LinkedIn_DidIt.jpg",
+        "action": "move",
+        "destination": "~/Documents/Work/"
+      },
+      {
+        "file": "Tyler_You_Are_Not_Me.mov",
+        "action": "move",
+        "destination": "~/Documents/Media/"
+      },
+      {
+        "file": "_V6oFck8jtax2o5iL6Uj2YY0pOEb5N58BMgre5Cb4Kx34IsMYhA0i1fjClu2ZHfh1A6MWsGKhBWTSa2Oz5YNbawGxXZtYVy6x7c.html",
+        "action": "delete",
+        "destination": "Trash"
+      },
+      {
+        "file": "expat_tech_destinations.md",
+        "action": "move",
+        "destination": "~/Documents/Personal/"
+      },
+      {
+        "file": "Untitled.csv",
+        "action": "delete",
+        "destination": "Trash"
+      },
+      {
+        "file": "Buck_SOC2.mov",
+        "action": "move",
+        "destination": "~/Documents/Media/"
+      },
+      {
+        "file": "ThigsGoWrong.mov",
+        "action": "move",
+        "destination": "~/Documents/Media/"
+      },
+      {
+        "file": "Bitters Recipe Developer.gsheet",
+        "action": "move",
+        "destination": "~/Documents/Personal/"
+      },
+      {
+        "file": "#didit.pptx",
+        "action": "move",
+        "destination": "~/Documents/Work/"
+      },
+      {
+        "file": "How to Build a DIY Workbench_ Super Simple $50 Bench.pdf",
+        "action": "move",
+        "destination": "~/Documents/Personal/"
+      },
+      {
+        "file": "Look_at_Me.mov",
+        "action": "move",
+        "destination": "~/Documents/Media/"
+      },
+      {
+        "file": "eisenhower matrix.xlsx",
+        "action": "move",
+        "destination": "~/Documents/Personal/"
+      },
+      {
+        "file": "Sympathy vs.docx",
+        "action": "move",
+        "destination": "~/Documents/Personal/"
+      },
+      {
+        "file": "Angry_Chef_Saturday_Itinerary_Branded.pdf",
+        "action": "move",
+        "destination": "~/Documents/Work/"
+      },
+      {
+        "file": "Doc1.docx",
+        "action": "delete",
+        "destination": "Trash"
+      },
+      {
+        "file": "Fear-Setting-with-Tim-Ferriss.pdf",
+        "action": "move",
+        "destination": "~/Documents/Books/"
+      },
+      {
+        "file": "A5_5min_journal_template.pdf",
+        "action": "move",
+        "destination": "~/Documents/Personal/"
+      },
+      {
+        "file": "1984.docx",
+        "action": "delete",
+        "destination": "Trash"
+      },
+      {
+        "file": "Buck_1.mov",
+        "action": "delete",
+        "destination": "Trash"
+      },
+      {
+        "file": "Dialpad_May2025_CallHistory_v3.pdf",
+        "action": "delete",
+        "destination": "Trash"
+      },
+      {
+        "file": "A5_5min_journal_template.docx",
+        "action": "move",
+        "destination": "~/Documents/Personal/"
+      },
+      {
+        "file": "runnig notes.txt",
+        "action": "delete",
+        "destination": "Trash"
+      },
+      {
+        "file": "Corp-Video-Future.pdf.pdf",
+        "action": "delete",
+        "destination": "Trash"
+      },
+      {
+        "file": "Buck_2.mov",
+        "action": "delete",
+        "destination": "Trash"
+      },
+      {
+        "file": "Summary.docx",
+        "action": "move",
+        "destination": "~/Documents/_Archive/"
+      },
+      {
+        "file": "Awake.mov",
+        "action": "move",
+        "destination": "~/Documents/Media/"
+      },
+      {
+        "file": "KK Docs.zip",
+        "action": "move",
+        "destination": "~/Documents/_Archive/"
+      },
+      {
+        "file": "ted_ferriss_fear_setting_sample_slides.pdf",
+        "action": "move",
+        "destination": "~/Documents/Books/"
+      },
+      {
+        "file": "root_insurance_card_20250816.pdf",
+        "action": "delete",
+        "destination": "Trash"
+      },
+      {
+        "file": "The_Bill_Cosby.mp3",
+        "action": "move",
+        "destination": "~/Documents/Media/"
+      },
+      {
+        "file": "Douglas-MedicalPharmacy-idcard.pdf",
+        "action": "delete",
+        "destination": "Trash"
+      },
+      {
+        "file": "Letter_A5-insert_5min_journal_template.pdf",
+        "action": "move",
+        "destination": "~/Documents/Personal/"
+      },
+      {
+        "file": "Douglas-MedicalPharmacy-idcard.png",
+        "action": "delete",
+        "destination": "Trash"
+      },
+      {
+        "file": "bookmarks_7_6_24.html",
+        "action": "delete",
+        "destination": "Trash"
+      },
+      {
+        "file": "AM20LawMedicineHealthPovertyPierson-BrownGraphics.pdf",
+        "action": "delete",
+        "destination": "Trash"
+      },
+      {
+        "file": "NYTPS_TTX_SURVEY.md",
+        "action": "delete",
+        "destination": "Trash"
+      },
+      {
+        "file": "Prescriptions.xlsx",
+        "action": "delete",
+        "destination": "Trash"
+      },
+      {
+        "file": "4A92FD2FB4DAE3F773DB0B7742CF0F65_Coleman.-.CONSPIRATORS.HIERARCHY.-.THE.STORY.OF.THE.COMMITTEE.OF.300.R.pdf",
+        "action": "move",
+        "destination": "~/Documents/Books/"
+      },
+      {
+        "file": "The Conscious Open Relationship Rules Agreement Template - Leveled Up Love.pdf",
+        "action": "move",
+        "destination": "~/Documents/Personal/"
+      },
+      {
+        "file": "DMS_DEN.txt",
+        "action": "move",
+        "destination": "~/Documents/Personal/"
+      },
+      {
+        "file": "voice-mail.mp3",
+        "action": "delete",
+        "destination": "Trash"
+      },
+      {
+        "file": "voicebooking-speech.mp3",
+        "action": "delete",
+        "destination": "Trash"
+      },
+      {
+        "file": "Refused - New Noise (video).mp3",
+        "action": "delete",
+        "destination": "Trash"
+      },
+      {
+        "file": "Waiting_Jaws.mov",
+        "action": "move",
+        "destination": "~/Documents/Media/"
+      },
+      {
+        "file": "Lana Del Rey - Summertime Sadness (Instrumental).mp4",
+        "action": "delete",
+        "destination": "Trash"
+      },
+      {
+        "file": "As_I_Forseen.mov",
+        "action": "move",
+        "destination": "~/Documents/Media/"
+      },
+      {
+        "file": "Lana Del Rey - Summertime Sadness (Instrumental).mp3",
+        "action": "delete",
+        "destination": "Trash"
+      },
+      {
+        "file": "Akron_Tire.pdf",
+        "action": "move",
+        "destination": "~/Documents/Personal/"
+      },
+      {
+        "file": "Caddyshack.mp3",
+        "action": "move",
+        "destination": "~/Documents/Media/"
+      },
+      {
+        "file": "0-w-170th-pl-1265-broomfield-co-united-states-3.pdf",
+        "action": "move",
+        "destination": "~/Documents/Personal/"
+      },
+      {
+        "file": "873072959978373150_OCR.pdf",
+        "action": "delete",
+        "destination": "Trash"
+      },
+      {
+        "file": "898769.html",
+        "action": "delete",
+        "destination": "Trash"
+      },
+      {
+        "file": "Untitled.pdf",
+        "action": "delete",
+        "destination": "Trash"
+      },
+      {
+        "file": "Timeline.docx",
+        "action": "delete",
+        "destination": "Trash"
+      },
+      {
+        "file": "videoplayback.mp4",
+        "action": "delete",
+        "destination": "Trash"
+      },
+      {
+        "file": "Current_Talk_Tracks_-_Douglas_Brush_-_Cyber_Security_Interviews.png",
+        "action": "delete",
+        "destination": "Trash"
+      },
+      {
+        "file": "Madball • FULL SET • Brooklyn, NY • 10.1.23.mp4",
+        "action": "move",
+        "destination": "~/Documents/Media/"
+      },
+      {
+        "file": "Nevermind_that_shit.mov",
+        "action": "move",
+        "destination": "~/Documents/Media/"
+      },
+      {
+        "file": "Selfie.png",
+        "action": "move",
+        "destination": "~/Documents/Personal/"
+      },
+      {
+        "file": "the-slow-carb-cookbook.pdf",
+        "action": "move",
+        "destination": "~/Documents/Books/"
+      },
+      {
+        "file": "Tractiongetagriponyourbusiness.pdf",
+        "action": "move",
+        "destination": "~/Documents/Books/"
+      },
+      {
+        "file": "Jokes.docx",
+        "action": "delete",
+        "destination": "Trash"
+      },
+      {
+        "file": "2025-08-14-Lucy-Omnibus-Expenses.xlsx",
+        "action": "move",
+        "destination": "~/Documents/Financial/"
+      },
+      {
+        "file": "BDE_Arrival.JPG",
+        "action": "delete",
+        "destination": "Trash"
+      },
+      {
+        "file": "RX_164750438_Brush.jpg",
+        "action": "delete",
+        "destination": "Trash"
+      },
+      {
+        "file": "vG-aLRWshgfre7KNpMdGOMB2bLz7UYKJBMHnD3V2KpOB8rdofJBzn0UM1N8SfTomGRwcBeoQWdphVS5kCbbO_ig-qP3rZhJ3kc0.html",
+        "action": "delete",
+        "destination": "Trash"
+      },
+      {
+        "file": "Omah_Beach.mov",
+        "action": "move",
+        "destination": "~/Documents/Media/"
+      }
+    ]
+  },
+  "summary": {
+    "totalActions": 109,
+    "securityFixes": 1,
+    "appRemovals": 13,
+    "appUpdates": 7,
+    "serviceDisables": 8,
+    "orphanCleanups": 11,
+    "brewUpgrade": true,
+    "documentMoves": 36,
+    "documentDeletes": 32
+  }
+}
