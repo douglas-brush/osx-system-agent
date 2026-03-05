@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from osx_system_agent.scanners.clutter import ClutterFile, scan_clutter
+from osx_system_agent.scanners.clutter import scan_clutter
 
 
 def test_scan_clutter_empty(tmp_path: Path) -> None:

@@ -13,6 +13,7 @@ from osx_system_agent.reports.writer import write_csv, write_json
 from osx_system_agent.scanners.aging import scan_aging
 from osx_system_agent.scanners.brew import scan_brew
 from osx_system_agent.scanners.caches import scan_caches
+from osx_system_agent.scanners.clutter import scan_clutter
 from osx_system_agent.scanners.disk_hogs import scan_disk_hogs
 from osx_system_agent.scanners.disk_usage import scan_disk_usage
 from osx_system_agent.scanners.duplicates import scan_duplicates
@@ -20,7 +21,6 @@ from osx_system_agent.scanners.inventory import scan_inventory
 from osx_system_agent.scanners.junk import scan_junk
 from osx_system_agent.scanners.launch_agents import scan_launch_agents
 from osx_system_agent.scanners.login_items import scan_login_items
-from osx_system_agent.scanners.clutter import scan_clutter
 from osx_system_agent.scanners.network import scan_network
 from osx_system_agent.scanners.security import scan_security
 from osx_system_agent.system.activity import get_system_status
@@ -1685,7 +1685,6 @@ def scan_clutter_cmd(
     out: str | None = typer.Option(None, help="Output directory for reports."),
 ) -> None:
     """Categorise Desktop/Downloads clutter for triage."""
-    from osx_system_agent.scanners.clutter import ClutterReport
 
     targets = [expand_path(path)]
     if downloads:
@@ -1715,7 +1714,10 @@ def scan_clutter_cmd(
     summary.add_column("Size", justify="right")
     summary.add_column("Action")
 
-    cat_order = ["word_temp", "dead_file", "webloc", "dmg_installer", "generic_name", "numbered_copy", "opaque_name", "stale"]
+    cat_order = [
+        "word_temp", "dead_file", "webloc", "dmg_installer",
+        "generic_name", "numbered_copy", "opaque_name", "stale",
+    ]
     for cat in cat_order:
         if cat in cat_counts:
             summary.add_row(
@@ -1772,7 +1774,9 @@ def scan_clutter_cmd(
 def rename(
     path: str = typer.Option("~/Desktop", help="Directory to scan for files needing rename."),
     downloads: bool = typer.Option(True, help="Also scan ~/Downloads."),
-    all_files: bool = typer.Option(False, "--all", help="Propose renames for ALL files, not just bad names."),
+    all_files: bool = typer.Option(
+        False, "--all", help="Propose renames for ALL files, not just bad names."
+    ),
     dry_run: bool = typer.Option(True, help="Preview only; pass --no-dry-run to execute."),
 ) -> None:
     """Rename files based on content metadata. Default: dry-run preview."""
@@ -1824,7 +1828,7 @@ def rename(
         else:
             console.print()
     else:
-        console.print(f"\n[yellow]Pass --no-dry-run to execute renames.[/yellow]")
+        console.print("\n[yellow]Pass --no-dry-run to execute renames.[/yellow]")
 
 
 # ---------------------------------------------------------------------------

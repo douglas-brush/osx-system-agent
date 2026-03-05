@@ -16,7 +16,6 @@ from osx_system_agent.renamer import (
     scan_for_renames,
 )
 
-
 # ---- needs_rename -----------------------------------------------------------
 
 

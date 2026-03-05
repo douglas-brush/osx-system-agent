@@ -6,13 +6,11 @@ Falls back to modification-date prefixing for files with no extractable metadata
 
 from __future__ import annotations
 
-import os
 import plistlib
 import re
 import subprocess
-import time
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 
@@ -21,7 +19,8 @@ class RenameProposal:
     original: Path
     proposed: Path
     reason: str
-    source: str  # what metadata drove the rename: "mdls_title", "exif_date", "webloc_url", "email_subject", "date_prefix"
+    # metadata source: "mdls_title", "exif_date", "webloc_url", "email_subject", "date_prefix"
+    source: str
 
     @property
     def changed(self) -> bool:
@@ -52,9 +51,7 @@ def needs_rename(path: Path) -> bool:
     if _OPAQUE_RE.match(stem):
         return True
     # "(1)" style copies
-    if re.search(r"\(\d+\)$", stem):
-        return True
-    return False
+    return bool(re.search(r"\(\d+\)$", stem))
 
 
 # ---- Metadata extraction ------------------------------------------------------
@@ -134,7 +131,7 @@ def _extract_exif_date(attrs: dict[str, str]) -> str | None:
 def _extract_webloc_title(path: Path) -> str | None:
     """Parse .webloc plist for URL to derive a name."""
     try:
-        with open(path, "rb") as f:
+        with path.open("rb") as f:
             plist = plistlib.load(f)
         url = plist.get("URL", "")
         if url:
@@ -157,7 +154,7 @@ def _extract_email_subject(path: Path) -> str | None:
         return None
     try:
         import email
-        with open(path, "rb") as f:
+        with path.open("rb") as f:
             msg = email.message_from_binary_file(f)
         subject = msg.get("Subject", "")
         if subject:
@@ -195,9 +192,9 @@ def _date_prefix(path: Path) -> str:
     """Get YYYY-MM-DD from file mtime."""
     try:
         mtime = path.stat().st_mtime
-        return datetime.fromtimestamp(mtime, tz=timezone.utc).strftime("%Y-%m-%d")
+        return datetime.fromtimestamp(mtime, tz=UTC).strftime("%Y-%m-%d")
     except OSError:
-        return datetime.now(tz=timezone.utc).strftime("%Y-%m-%d")
+        return datetime.now(tz=UTC).strftime("%Y-%m-%d")
 
 
 # ---- Core rename logic --------------------------------------------------------
@@ -215,7 +212,7 @@ def propose_rename(path: Path) -> RenameProposal:
             return RenameProposal(
                 original=path,
                 proposed=parent / new_name,
-                reason=f"Derived from bookmark URL",
+                reason="Derived from bookmark URL",
                 source="webloc_url",
             )
 
